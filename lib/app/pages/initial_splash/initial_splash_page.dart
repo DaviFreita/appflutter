@@ -12,20 +12,46 @@ class _InitialSplashPageState extends State<InitialSplashPage> {
   @override
   void initState() {
     super.initState();
-    // espera 3 segundos e vai para o login
-    Future.delayed(const Duration(seconds: 3), () {
+
+    Future.delayed(const Duration(seconds: 2), () {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const LoginPage()),
+        MaterialPageRoute(builder: (context) => const LoginPage()),
       );
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: Text('Meu App'), // troque pelo logo do seu app
+    final sizeHeight = MediaQuery.of(context).size.height;
+    final sizeWidth = MediaQuery.of(context).size.width;
+
+    return Scaffold(
+      body: Padding(
+        padding: EdgeInsets.all(20),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              Image.asset(
+                'lib/app/assets/img/Logo.png',
+                width: sizeWidth * 0.5,
+                height: sizeHeight * 0.5,
+              ),
+
+              const Spacer(),
+              const Text('from', style: TextStyle(fontSize: 12)),
+              const Text(
+                'EVOLUTEC',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue,
+                ),
+              ),
+              const SizedBox(height: 30),
+            ],
+          ),
+        ),
       ),
     );
   }
