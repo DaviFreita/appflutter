@@ -5,12 +5,14 @@ class AuthRegistermodel {
     required String name,
     required String cpf,
     required String password,
+    required DateTime date,
   }) async {
     UserModel user = UserModel(
       id: DateTime.now().toString(),
       name: name,
       cpf: cpf,
       password: password,
+      date: date,
     );
 
     print(user.toJson());
