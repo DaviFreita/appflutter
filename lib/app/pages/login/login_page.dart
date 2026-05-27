@@ -1,7 +1,9 @@
+import 'package:appflutter/app/pages/home/home_page.dart';
 import 'package:appflutter/app/pages/register/register_page.dart';
 import 'package:appflutter/app/utils/utils_validators.dart';
+import 'package:appflutter/app/service/api_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 final TextEditingController _cpfController = TextEditingController();
 final TextEditingController _passwordController = TextEditingController();
@@ -40,7 +42,6 @@ class LoginPage extends StatelessWidget {
               ),
 
               const SizedBox(height: 20),
-
               //campo de Senha
               TextFormField(
                 controller: _passwordController,
@@ -48,8 +49,40 @@ class LoginPage extends StatelessWidget {
 
                 decoration: const InputDecoration(labelText: 'Senha'),
               ),
-
               const SizedBox(height: 30),
+
+              ElevatedButton(
+                onPressed: () async {
+                  try {
+                    final authService = ApiService();
+
+                    final token = await authService.login(
+                      cpf: _cpfController.text,
+                      password: _passwordController.text,
+                    );
+
+                    final prefs = await SharedPreferences.getInstance();
+
+                    await prefs.setString('token', token);
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Login realizado com sucesso'),
+                      ),
+                    );
+
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => const HomePage()),
+                    );
+                  } catch (e) {
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text(e.toString())));
+                  }
+                },
+                child: const Text('Entrar'),
+              ),
 
               TextButton(
                 onPressed: () {
