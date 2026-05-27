@@ -20,9 +20,11 @@ class _RegisterPageState extends State<RegisterPage> {
 
   final TextEditingController _cpfController = TextEditingController();
 
-  TextEditingController _passwordController = TextEditingController();
+  TextEditingController passwordController = TextEditingController();
 
-  TextEditingController _dateController = TextEditingController();
+  TextEditingController dateController = TextEditingController();
+
+  DateTime? selectDate;
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +70,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
               //campo de Senha
               TextFormField(
-                controller: _passwordController,
+                controller: passwordController,
                 obscureText: true,
 
                 decoration: const InputDecoration(labelText: 'Senha'),
@@ -80,7 +82,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
               //campo de data
               TextFormField(
-                controller: _dateController,
+                controller: dateController,
                 readOnly: true, //vai impedir do usuario diigtar
 
                 decoration: const InputDecoration(
@@ -97,8 +99,11 @@ class _RegisterPageState extends State<RegisterPage> {
                     lastDate: DateTime.now(),
                   );
                   if (date != null) {
-                    _dateController.text =
-                        '${date.day}/${date.month}/${date.year}';
+                    setState(() {
+                      selectDate = date; // Salva o DateTime aqui
+                      dateController.text =
+                          '${date.day}/${date.month}/${date.year}';
+                    });
                   }
                 },
 
@@ -111,7 +116,8 @@ class _RegisterPageState extends State<RegisterPage> {
                     await viewModel.register(
                       name: nameController.text,
                       cpf: _cpfController.text,
-                      password: _passwordController.text,
+                      password: passwordController.text,
+                      date: selectDate!,
                     );
 
                     ScaffoldMessenger.of(context).showSnackBar(
