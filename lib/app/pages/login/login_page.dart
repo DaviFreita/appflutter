@@ -1,11 +1,9 @@
 import 'package:appflutter/app/pages/home/home_page.dart';
 import 'package:appflutter/app/pages/register/register_page.dart';
-import 'package:appflutter/app/utils/utils_validators.dart';
-import 'package:appflutter/app/service/api_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:appflutter/app/viewmodels/auth_service.dart';
 import 'package:flutter/material.dart';
 
-final TextEditingController _cpfController = TextEditingController();
+final TextEditingController _emailController = TextEditingController();
 final TextEditingController _passwordController = TextEditingController();
 
 class LoginPage extends StatelessWidget {
@@ -30,21 +28,15 @@ class LoginPage extends StatelessWidget {
               ),
 
               TextFormField(
-                controller: _cpfController,
+                controller: _emailController,
 
-                keyboardType: TextInputType.number,
-
-                decoration: const InputDecoration(labelText: 'CPF'),
-
-                inputFormatters: [UtilsValidators().cpfMaskFormatter],
-
-                validator: (value) => UtilsValidators.cpf(value),
+                decoration: const InputDecoration(labelText: 'Email'),
               ),
-
               const SizedBox(height: 20),
               //campo de Senha
               TextFormField(
                 controller: _passwordController,
+
                 obscureText: true,
 
                 decoration: const InputDecoration(labelText: 'Senha'),
@@ -54,16 +46,12 @@ class LoginPage extends StatelessWidget {
               ElevatedButton(
                 onPressed: () async {
                   try {
-                    final authService = ApiService();
+                    final ApiService = AuthService();
 
-                    final token = await authService.login(
-                      cpf: _cpfController.text,
+                    await ApiService.login(
+                      email: _emailController.text,
                       password: _passwordController.text,
                     );
-
-                    final prefs = await SharedPreferences.getInstance();
-
-                    await prefs.setString('token', token);
 
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(

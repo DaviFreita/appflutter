@@ -26,6 +26,8 @@ class _InitialSplashPageState extends State<InitialSplashPage> {
     final sizeHeight = MediaQuery.of(context).size.height;
     final sizeWidth = MediaQuery.of(context).size.width;
 
+    const nameEmp = 'EVOLUTEC';
+
     return Scaffold(
       body: Padding(
         padding: EdgeInsets.all(20),
@@ -42,7 +44,7 @@ class _InitialSplashPageState extends State<InitialSplashPage> {
               const Spacer(),
               const Text('from', style: TextStyle(fontSize: 12)),
               const Text(
-                'EVOLUTEC',
+                nameEmp,
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   color: Colors.blue,

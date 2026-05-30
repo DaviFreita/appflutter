@@ -1,7 +1,7 @@
 import 'package:appflutter/app/utils/utils_validators.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:appflutter/app/viewmodels/auth_registermodel.dart';
+import 'package:appflutter/app/viewmodels/auth_service.dart';
 import 'package:appflutter/app/pages/login/login_page.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -12,7 +12,7 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-  final AuthRegistermodel viewModel = AuthRegistermodel();
+  final AuthService viewModel = AuthService();
 
   final _formKey = GlobalKey<FormState>();
 
@@ -20,9 +20,11 @@ class _RegisterPageState extends State<RegisterPage> {
 
   final TextEditingController _cpfController = TextEditingController();
 
-  TextEditingController passwordController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
 
   TextEditingController dateController = TextEditingController();
+
+  final TextEditingController _emailController = TextEditingController();
 
   DateTime? selectDate;
 
@@ -68,9 +70,19 @@ class _RegisterPageState extends State<RegisterPage> {
 
               const SizedBox(height: 20),
 
+              //campo de email
+              TextFormField(
+                controller: _emailController,
+
+                decoration: const InputDecoration(labelText: 'Email'),
+
+                validator: (value) => UtilsValidators.email(value),
+              ),
+              const SizedBox(height: 30),
+
               //campo de Senha
               TextFormField(
-                controller: passwordController,
+                controller: _passwordController,
                 obscureText: true,
 
                 decoration: const InputDecoration(labelText: 'Senha'),
@@ -113,23 +125,40 @@ class _RegisterPageState extends State<RegisterPage> {
               ElevatedButton(
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
-                    await viewModel.register(
-                      name: nameController.text,
-                      cpf: _cpfController.text,
-                      password: passwordController.text,
-                      date: selectDate!,
-                    );
+                    try {
+                      final authService = AuthService();
 
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Usuário cadastrado')),
-                    );
+                      await authService.register(
+                        name: nameController.text,
+                        cpf: _cpfController.text,
+                        email: _emailController.text,
+                        password: _passwordController.text,
+                        date: selectDate!,
+                      );
 
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const LoginPage(),
-                      ),
-                    );
+                      if (!context.mounted) return;
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Usuário cadastrado. Verifique seu email.',
+                          ),
+                        ),
+                      );
+
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const LoginPage(),
+                        ),
+                      );
+                    } catch (e) {
+                      if (!context.mounted) return;
+
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text(e.toString())));
+                    }
                   }
                 },
 
