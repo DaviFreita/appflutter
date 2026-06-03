@@ -46,8 +46,13 @@ class UtilsValidators {
     return null;
   }
 
+  static String? passwordBasic(String? value) {
+    if (value == null || value.isEmpty) return 'Senha obrigatória.';
+    return null;
+  }
+
   static String? password(String? value) {
-    if (value == null || value.isEmpty) return 'Digite sua senha';
+    if (value == null || value.isEmpty) return 'Senha obrigatória';
 
     if (value.length < 8) return 'Senha muito curta';
 
@@ -65,7 +70,7 @@ class UtilsValidators {
     filter: {"#": RegExp(r'[0-9]')},
   );
 
-  static String? Birth(String? value) {
+  static String? birth(String? value) {
     if (value == null || value.isEmpty) {
       return 'Selecione uma data';
     }
@@ -87,23 +92,17 @@ class UtilsValidators {
       ade--;
     }
 
-    if (ade < 18) {
-      return 'Você deve ter pelo menos 18 anos';
-    }
+    if (ade < 18) return 'Você deve ter pelo menos 18 anos';
 
     return null;
   }
 
   static String? email(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Email Obrigatório';
-    }
+    if (value == null || value.isEmpty) return 'Email Obrigatório';
 
     final emailRegex = RegExp(r'^[\w\-\.]+@([\w\-]+\.)+[\w\-]{2,4}$');
 
-    if (!emailRegex.hasMatch(value)) {
-      return 'Email inválido';
-    }
+    if (!emailRegex.hasMatch(value)) return 'Email inválido';
 
     return null;
   }

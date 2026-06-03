@@ -1,23 +1,35 @@
 import 'package:appflutter/app/pages/home/home_page.dart';
 import 'package:appflutter/app/pages/register/register_page.dart';
-import 'package:appflutter/app/viewmodels/auth_service.dart';
+import 'package:appflutter/app/utils/utils_validators.dart';
+import 'package:appflutter/app/viewmodels/login_service.dart';
 import 'package:flutter/material.dart';
 
-final TextEditingController _emailController = TextEditingController();
-final TextEditingController _passwordController = TextEditingController();
-
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
+
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  final LoginService viewModel = LoginService();
+
+  final _formKey = GlobalKey<FormState>();
+
+  final TextEditingController _emailController = TextEditingController();
+
+  final TextEditingController _passwordController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Login')),
 
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
 
-        child: Center(
+        child: Form(
+          key: _formKey,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
@@ -30,39 +42,56 @@ class LoginPage extends StatelessWidget {
               TextFormField(
                 controller: _emailController,
 
+                keyboardType: TextInputType.emailAddress,
+
+                autocorrect: false,
+                //para ter o botão de proximo no teclado
+                textInputAction: TextInputAction.next,
+
                 decoration: const InputDecoration(labelText: 'Email'),
+
+                validator: (value) => UtilsValidators.email(value),
               ),
               const SizedBox(height: 20),
+
               //campo de Senha
               TextFormField(
                 controller: _passwordController,
 
-                obscureText: true,
+                //criar a senha obscura, tanto aq quanto no register
+                //alterar caixas de texto
+                textInputAction: TextInputAction.done,
 
                 decoration: const InputDecoration(labelText: 'Senha'),
+
+                validator: (value) => UtilsValidators.passwordBasic(value),
               ),
               const SizedBox(height: 30),
 
               ElevatedButton(
                 onPressed: () async {
                   try {
-                    final ApiService = AuthService();
+                    if (_formKey.currentState!.validate()) {
+                      final api_service = LoginService();
 
-                    await ApiService.login(
-                      email: _emailController.text,
-                      password: _passwordController.text,
-                    );
+                      await api_service.login(
+                        email: _emailController.text,
+                        password: _passwordController.text,
+                      );
 
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Login realizado com sucesso'),
-                      ),
-                    );
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Login realizado com sucesso'),
+                        ),
+                      );
 
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => const HomePage()),
-                    );
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const HomePage(),
+                        ),
+                      );
+                    }
                   } catch (e) {
                     ScaffoldMessenger.of(
                       context,
@@ -90,5 +119,12 @@ class LoginPage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
   }
 }

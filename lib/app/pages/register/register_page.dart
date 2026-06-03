@@ -1,7 +1,7 @@
 import 'package:appflutter/app/utils/utils_validators.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:appflutter/app/viewmodels/auth_service.dart';
+import 'package:appflutter/app/viewmodels/register_service.dart';
 import 'package:appflutter/app/pages/login/login_page.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -12,7 +12,7 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-  final AuthService viewModel = AuthService();
+  final RegisterService viewModel = RegisterService();
 
   final _formKey = GlobalKey<FormState>();
 
@@ -49,6 +49,10 @@ class _RegisterPageState extends State<RegisterPage> {
                   FilteringTextInputFormatter.allow(RegExp(r'[a-zA-ZÀ-ÿ ]')),
                 ],
 
+                keyboardType: TextInputType.name,
+
+                textInputAction: TextInputAction.next,
+
                 decoration: const InputDecoration(labelText: 'Nome Completo'),
 
                 validator: (value) => UtilsValidators.name(value),
@@ -60,6 +64,8 @@ class _RegisterPageState extends State<RegisterPage> {
                 controller: _cpfController,
 
                 keyboardType: TextInputType.number,
+
+                textInputAction: TextInputAction.next,
 
                 decoration: const InputDecoration(labelText: 'CPF'),
 
@@ -83,7 +89,14 @@ class _RegisterPageState extends State<RegisterPage> {
               //campo de Senha
               TextFormField(
                 controller: _passwordController,
+
                 obscureText: true,
+
+                textInputAction: TextInputAction.next,
+
+                autocorrect: false,
+
+                enableSuggestions: false,
 
                 decoration: const InputDecoration(labelText: 'Senha'),
 
@@ -119,14 +132,14 @@ class _RegisterPageState extends State<RegisterPage> {
                   }
                 },
 
-                validator: (value) => UtilsValidators.Birth(value),
+                validator: (value) => UtilsValidators.birth(value),
               ),
 
               ElevatedButton(
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
                     try {
-                      final authService = AuthService();
+                      final authService = RegisterService();
 
                       await authService.register(
                         name: nameController.text,
@@ -181,5 +194,15 @@ class _RegisterPageState extends State<RegisterPage> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    nameController.dispose();
+    _cpfController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    dateController.dispose();
   }
 }
