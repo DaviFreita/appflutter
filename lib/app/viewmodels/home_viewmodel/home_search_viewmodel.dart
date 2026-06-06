@@ -18,42 +18,13 @@ class HomeSearchViewmodel extends ChangeNotifier {
       )
     ''');
 
-      print('====================================');
-      print('RESPOSTA COMPLETA');
-      print(response);
-
-      print('====================================');
-      print('PRIMEIRO ITEM');
-      print(response.first);
-
-      print('====================================');
-      print('CHAVES DO PRIMEIRO ITEM');
-      print(response.first.keys);
-
-      print('====================================');
-      print('CAMPO CATEGORY');
-      print(response.first['category']);
-
-      products = response.map((e) {
-        print('====================================');
-        print('MAP INDIVIDUAL');
-        print(e);
-
-        return ProductSearchModel.fromMap(e);
-      }).toList();
-
-      for (var p in products) {
-        print('====================================');
-        print('Produto: ${p.name}');
-        print('Categoria: ${p.category}');
-      }
+      products = response.map((e) => ProductSearchModel.fromMap(e)).toList();
 
       filteredProducts = List.from(products);
 
       notifyListeners();
     } catch (e) {
-      print('====================================');
-      print('ERRO AO CARREGAR');
+      print("ERRO AO CARREGAR PRODUTOS");
       print(e);
     }
   }
@@ -67,10 +38,62 @@ class HomeSearchViewmodel extends ChangeNotifier {
           return product.name.toLowerCase().contains(value.toLowerCase());
         }).toList();
       }
+
+      notifyListeners();
     } catch (e) {
-      print('Erro na busca: $e');
+      print("ERRO NA BUSCA");
+      print(e);
+    }
+  }
+
+  Future<void> filterByCategory(String category) async {
+    if (category == 'Todos') {
+      filteredProducts = List.from(products);
+    } else {
+      filteredProducts = products.where((product) {
+        return product.category == category;
+      }).toList();
     }
 
     notifyListeners();
+  }
+
+  Future<void> updateProduct({
+    required int id,
+    required String name,
+    required double price,
+    required int stock,
+    required int categoryId,
+  }) async {
+    try {
+      print("========== UPDATE ==========");
+      print("ID: $id");
+      print("Nome: $name");
+      print("Preço: $price");
+      print("Estoque: $stock");
+      print("Categoria: $categoryId");
+
+      final response = await supabase
+          .from('product')
+          .update({
+            'name': name,
+            'price': price,
+            'stock': stock,
+            'category_id': categoryId,
+          })
+          .eq('id', id)
+          .select();
+
+      print("RESPOSTA UPDATE:");
+      print(response);
+
+      await loadProduct();
+    } catch (e, s) {
+      print("ERRO AO ATUALIZAR");
+      print(e);
+      print(s);
+
+      rethrow;
+    }
   }
 }
