@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'package:DasCobras/app/viewmodels/home_viewmodel/home_search_viewmodel.dart';
 import 'package:DasCobras/app/pages/home/edit_product_dialog.dart';
+import 'package:DasCobras/app/pages/home/add_product_dialog.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -304,7 +305,73 @@ class _HomePageState extends State<HomePage> {
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: IconButton(
-                                    onPressed: () {},
+                                    onPressed: () async {
+                                      final confirmar = await showDialog<bool>(
+                                        context: context,
+                                        builder: (context) {
+                                          return AlertDialog(
+                                            title: const Text(
+                                              "Excluir Produto",
+                                            ),
+                                            content: Text(
+                                              "Deseja realmente apagar o produto\n\n${product.name} ?",
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () {
+                                                  Navigator.pop(context, false);
+                                                },
+                                                child: const Text("Não"),
+                                              ),
+                                              ElevatedButton(
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: Colors.red,
+                                                ),
+                                                onPressed: () {
+                                                  Navigator.pop(context, true);
+                                                },
+                                                child: const Text(
+                                                  "Sim",
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          );
+                                        },
+                                      );
+
+                                      if (confirmar == true) {
+                                        try {
+                                          await context
+                                              .read<HomeSearchViewmodel>()
+                                              .deleteProduct(product.id);
+
+                                          if (mounted) {
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                  "Produto removido com sucesso!",
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                        } catch (e) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                "Erro ao apagar: $e",
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      }
+                                    },
                                     icon: const Icon(
                                       Icons.delete_outline,
                                       color: Colors.white,
@@ -327,7 +394,12 @@ class _HomePageState extends State<HomePage> {
 
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color(0xFF0D3F87),
-        onPressed: () {},
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (context) => const AddProductDialog(),
+          );
+        },
         child: const Icon(Icons.add, color: Colors.white, size: 35),
       ),
 

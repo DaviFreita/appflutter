@@ -58,6 +58,24 @@ class HomeSearchViewmodel extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> addProduct({
+    required String name,
+    required String imageurl,
+    required double price,
+    required int stock,
+    required int categoryId,
+  }) async {
+    await supabase.from('product').insert({
+      'name': name,
+      'imageurl': imageurl,
+      'price': price,
+      'stock': stock,
+      'category_id': categoryId,
+    });
+
+    await loadProduct();
+  }
+
   Future<void> updateProduct({
     required int id,
     required String name,
@@ -95,5 +113,11 @@ class HomeSearchViewmodel extends ChangeNotifier {
 
       rethrow;
     }
+  }
+
+  Future<void> deleteProduct(int id) async {
+    await supabase.from('product').delete().eq('id', id);
+
+    await loadProduct();
   }
 }
