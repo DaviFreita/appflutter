@@ -2,31 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:DasCobras/app/viewmodels/home_viewmodel/home_search_viewmodel.dart';
-import 'package:DasCobras/app/pages/home/edit_product_dialog.dart';
-import 'package:DasCobras/app/pages/home/add_product_dialog.dart';
-import 'package:DasCobras/app/pages/client/client_page.dartclient_page.dart';
-import 'package:DasCobras/app/pages/sales/sales_page.dart';
-import 'package:DasCobras/app/pages/reports/reports_page.dart';
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+import 'package:DasCobras/app/pages/home/home_page.dart';
+import 'package:DasCobras/app/pages/client/client_page.dartclient_page.dart';
+import 'package:DasCobras/app/pages/reports/reports_page.dart';
+import '../../model/customer_model.dart';
+import '../../viewmodels/client_viewmodel/client_viewmodel.dart';
+
+class SalesPage extends StatefulWidget {
+  const SalesPage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<SalesPage> createState() => _SalesPageState();
 }
 
-class _HomePageState extends State<HomePage> {
-  String selectedCategory = 'Todos';
-  int currentIndex = 0;
-
-  final List<String> categories = [
-    'Todos',
-    'Bebida',
-    'Massas',
-    'Ração',
-    'Refrigerante',
-    'Grãos',
-  ];
+class _SalesPageState extends State<SalesPage> {
+  CustomerModel? selectedCustomer;
 
   @override
   void initState() {
@@ -34,42 +25,8 @@ class _HomePageState extends State<HomePage> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<HomeSearchViewmodel>().loadProduct();
+      context.read<ClientViewModel>().loadCustomers();
     });
-  }
-
-  void openCategoryFilter() {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return SafeArea(
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: categories.length,
-            itemBuilder: (context, index) {
-              final category = categories[index];
-
-              return ListTile(
-                title: Text(category),
-                trailing: selectedCategory == category
-                    ? const Icon(Icons.check, color: Color(0xFF0D3F87))
-                    : null,
-                onTap: () {
-                  setState(() {
-                    selectedCategory = category;
-                  });
-
-                  context.read<HomeSearchViewmodel>().filterByCategory(
-                    category,
-                  );
-
-                  Navigator.pop(context);
-                },
-              );
-            },
-          ),
-        );
-      },
-    );
   }
 
   @override
@@ -81,12 +38,130 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           children: [
             const SizedBox(height: 15),
-
+            
+            // Logo acima da barra de busca de cliente
             Center(
               child: Image.asset(
                 'lib/app/assets/img/LogoLonga.png',
                 width: 180,
               ),
+            ),
+
+            const SizedBox(height: 15),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: SearchBar(
+                hintText: 'Buscar Cliente...',
+                elevation: const WidgetStatePropertyAll(0),
+                backgroundColor: const WidgetStatePropertyAll(Colors.white),
+                trailing: const [Icon(Icons.search, color: Colors.grey)],
+                shape: WidgetStatePropertyAll(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: BorderSide(color: Colors.grey.shade400),
+                  ),
+                ),
+                onChanged: (value) {
+                  context.read<ClientViewModel>().searchCustomer(value);
+                },
+              ),
+            ),
+
+            const SizedBox(height: 15),
+            Consumer<ClientViewModel>(
+              builder: (context, clientVm, _) {
+                if (selectedCustomer == null &&
+                    clientVm.filteredCustomers.isNotEmpty) {
+                  selectedCustomer = clientVm.filteredCustomers.first;
+                }
+
+                if (selectedCustomer == null) {
+                  return const SizedBox();
+                }
+
+                return Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border.all(color: const Color(0xFF0D3F87)),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 70,
+                        height: 70,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: const Color(0xFF0D3F87)),
+                        ),
+                        child: const Icon(
+                          Icons.person_outline,
+                          size: 50,
+                          color: Color(0xFF0D3F87),
+                        ),
+                      ),
+
+                      const SizedBox(width: 10),
+
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              selectedCustomer!.name,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+
+                            const SizedBox(height: 4),
+
+                            Text(
+                              'CNPJ/CPF:${selectedCustomer!.cpforcnpj}',
+                              style: const TextStyle(
+                                color: Color(0xFF0D3F87),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+
+                            const SizedBox(height: 8),
+
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF0D3F87),
+                                borderRadius: BorderRadius.circular(5),
+                              ),
+                              child: const Text(
+                                'Ver Detalhes',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      IconButton(
+                        onPressed: () {
+                          setState(() {
+                            selectedCustomer = null;
+                          });
+                        },
+                        icon: const Icon(Icons.close, color: Color(0xFF0D3F87)),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
 
             const SizedBox(height: 15),
@@ -127,9 +202,9 @@ class _HomePageState extends State<HomePage> {
                       color: const Color(0xFF0D3F87),
                       borderRadius: BorderRadius.circular(5),
                     ),
-                    child: Text(
-                      selectedCategory,
-                      style: const TextStyle(
+                    child: const Text(
+                      'Todos',
+                      style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w600,
                       ),
@@ -138,18 +213,15 @@ class _HomePageState extends State<HomePage> {
 
                   const SizedBox(width: 8),
 
-                  GestureDetector(
-                    onTap: openCategoryFilter,
-                    child: Container(
-                      padding: const EdgeInsets.all(5),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: const Color(0xFF0D3F87)),
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                      child: const Icon(
-                        Icons.filter_alt_outlined,
-                        color: Color(0xFF0D3F87),
-                      ),
+                  Container(
+                    padding: const EdgeInsets.all(5),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: const Color(0xFF0D3F87)),
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    child: const Icon(
+                      Icons.filter_alt_outlined,
+                      color: Color(0xFF0D3F87),
                     ),
                   ),
                 ],
@@ -171,12 +243,7 @@ class _HomePageState extends State<HomePage> {
                   }
 
                   return ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(
-                      10,
-                      0,
-                      10,
-                      100, // espaço para o FloatingActionButton
-                    ),
+                    padding: const EdgeInsets.fromLTRB(10, 0, 10, 100),
                     itemCount: service.filteredProducts.length,
                     itemBuilder: (context, index) {
                       final product = service.filteredProducts[index];
@@ -226,9 +293,8 @@ class _HomePageState extends State<HomePage> {
                                   Text(
                                     product.name,
                                     style: const TextStyle(
-                                      fontSize: 20,
+                                      fontSize: 22,
                                       fontWeight: FontWeight.bold,
-                                      color: Color(0xFF000000),
                                     ),
                                   ),
 
@@ -243,7 +309,7 @@ class _HomePageState extends State<HomePage> {
                                   Text(
                                     'R\$ ${product.price.toStringAsFixed(2)}',
                                     style: const TextStyle(
-                                      color: Color(0xFF28A745),
+                                      color: Colors.green,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 18,
                                     ),
@@ -273,7 +339,6 @@ class _HomePageState extends State<HomePage> {
                                           '${product.stock} em estoque',
                                           style: const TextStyle(
                                             color: Colors.white,
-                                            fontWeight: FontWeight.w600,
                                           ),
                                         ),
                                       ],
@@ -283,111 +348,26 @@ class _HomePageState extends State<HomePage> {
                               ),
                             ),
 
-                            Column(
-                              children: [
-                                Container(
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFFF9800),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: IconButton(
-                                    onPressed: () {
-                                      print('Categoria: ${product.category}');
-                                      showDialog(
-                                        context: context,
-                                        builder: (context) =>
-                                            EditProductDialog(product: product),
-                                      );
-                                    },
-                                    icon: const Icon(
-                                      Icons.edit_outlined,
-                                      color: Colors.white,
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.green,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: IconButton(
+                                onPressed: () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        '${product.name} adicionado ao carrinho',
+                                      ),
                                     ),
-                                  ),
+                                  );
+                                },
+                                icon: const Icon(
+                                  Icons.add,
+                                  color: Colors.white,
                                 ),
-
-                                const SizedBox(height: 8),
-
-                                Container(
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFF44336),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: IconButton(
-                                    onPressed: () async {
-                                      final confirmar = await showDialog<bool>(
-                                        context: context,
-                                        builder: (context) {
-                                          return AlertDialog(
-                                            title: const Text(
-                                              "Excluir Produto",
-                                            ),
-                                            content: Text(
-                                              "Deseja realmente apagar o produto\n\n${product.name} ?",
-                                            ),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () {
-                                                  Navigator.pop(context, false);
-                                                },
-                                                child: const Text("Não"),
-                                              ),
-                                              ElevatedButton(
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor: Colors.red,
-                                                ),
-                                                onPressed: () {
-                                                  Navigator.pop(context, true);
-                                                },
-                                                child: const Text(
-                                                  "Sim",
-                                                  style: TextStyle(
-                                                    color: Colors.white,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          );
-                                        },
-                                      );
-
-                                      if (confirmar == true) {
-                                        try {
-                                          await context
-                                              .read<HomeSearchViewmodel>()
-                                              .deleteProduct(product.id);
-
-                                          if (mounted) {
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              const SnackBar(
-                                                content: Text(
-                                                  "Produto removido com sucesso!",
-                                                ),
-                                              ),
-                                            );
-                                          }
-                                        } catch (e) {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                "Erro ao apagar: $e",
-                                              ),
-                                            ),
-                                          );
-                                        }
-                                      }
-                                    },
-                                    icon: const Icon(
-                                      Icons.delete_outline,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
                           ],
                         ),
@@ -403,18 +383,13 @@ class _HomePageState extends State<HomePage> {
 
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color(0xFF0D3F87),
-        onPressed: () {
-          showDialog(
-            context: context,
-            builder: (context) => const AddProductDialog(),
-          );
-        },
-        child: const Icon(Icons.add, color: Colors.white, size: 35),
+        onPressed: () {},
+        child: const Icon(Icons.shopping_cart_outlined, color: Colors.white),
       ),
 
       bottomNavigationBar: BottomNavigationBar(
+        currentIndex: 2,
         type: BottomNavigationBarType.fixed,
-        currentIndex: 0,
         selectedItemColor: const Color(0xFF0D3F87),
         unselectedItemColor: const Color(0xFF0D3F87),
         showUnselectedLabels: true,
@@ -422,25 +397,24 @@ class _HomePageState extends State<HomePage> {
         onTap: (index) {
           switch (index) {
             case 0:
-              // Já está na Home
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const HomePage()),
+              );
               break;
 
             case 1:
-              Navigator.push(
+              Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (_) => const ClientPage()),
               );
               break;
 
             case 2:
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const SalesPage()),
-              );
               break;
 
             case 3:
-              Navigator.push(
+              Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (_) => const ReportsPage()),
               );

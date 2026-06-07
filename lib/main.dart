@@ -4,9 +4,10 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:DasCobras/app/pages/initial_splash/initial_splash_page.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
-import 'package:DasCobras/app/viewmodels/home_viewmodel/home_search_viewmodel.dart';
 
-//async vai avisar que vai demorar
+import 'package:DasCobras/app/viewmodels/home_viewmodel/home_search_viewmodel.dart';
+import 'package:DasCobras/app/viewmodels/client_viewmodel/client_viewmodel.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -18,12 +19,16 @@ void main() async {
   );
 
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => HomeSearchViewmodel(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => HomeSearchViewmodel()),
+        ChangeNotifierProvider(create: (_) => ClientViewModel()),
+      ],
       child: const MyApp(),
     ),
   );
 }
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

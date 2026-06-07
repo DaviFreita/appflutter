@@ -112,4 +112,8 @@ class HomeSearchViewmodel extends ChangeNotifier {
 
     await loadProduct();
   }
+
+  Future<void> refreshProducts() async {
+    await loadProduct();
+  }
 }
