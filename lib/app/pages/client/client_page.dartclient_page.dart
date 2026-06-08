@@ -4,6 +4,9 @@ import 'package:provider/provider.dart';
 import 'package:DasCobras/app/pages/home/home_page.dart';
 import 'package:DasCobras/app/pages/sales/sales_page.dart';
 import 'package:DasCobras/app/pages/reports/reports_page.dart';
+import 'package:DasCobras/app/pages/client/create_client_dialog.dart';
+import 'package:DasCobras/app/pages/client/edit_client_dialog.dart';
+import 'view_client_dialog.dart';
 
 import '../../viewmodels/client_viewmodel/client_viewmodel.dart';
 
@@ -152,20 +155,29 @@ class _ClientPageState extends State<ClientPage> {
 
                                   const SizedBox(height: 8),
 
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFF0D3F87),
-                                      borderRadius: BorderRadius.circular(5),
-                                    ),
-                                    child: const Text(
-                                      'Ver Detalhes',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w600,
+                                  GestureDetector(
+                                    onTap: () {
+                                      showDialog(
+                                        context: context,
+                                        builder: (_) =>
+                                            ViewClientDialog(client: client),
+                                      );
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF0D3F87),
+                                        borderRadius: BorderRadius.circular(5),
+                                      ),
+                                      child: const Text(
+                                        'Ver Detalhes',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w600,
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -181,7 +193,13 @@ class _ClientPageState extends State<ClientPage> {
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: IconButton(
-                                    onPressed: () {},
+                                    onPressed: () {
+                                      showDialog(
+                                        context: context,
+                                        builder: (_) =>
+                                            EditClientDialog(client: client),
+                                      );
+                                    },
                                     icon: const Icon(
                                       Icons.edit_outlined,
                                       color: Colors.white,
@@ -197,7 +215,75 @@ class _ClientPageState extends State<ClientPage> {
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: IconButton(
-                                    onPressed: () {},
+                                    onPressed: () async {
+                                      final confirmar = await showDialog<bool>(
+                                        context: context,
+                                        builder: (context) {
+                                          return AlertDialog(
+                                            title: const Text(
+                                              "Excluir Cliente",
+                                            ),
+                                            content: Text(
+                                              "Deseja realmente apagar o cliente?\n\n${client.name}",
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () {
+                                                  Navigator.pop(context, false);
+                                                },
+                                                child: const Text("Não"),
+                                              ),
+                                              ElevatedButton(
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: Colors.red,
+                                                ),
+                                                onPressed: () {
+                                                  Navigator.pop(context, true);
+                                                },
+                                                child: const Text(
+                                                  "Sim",
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          );
+                                        },
+                                      );
+
+                                      if (confirmar == true) {
+                                        try {
+                                          await context
+                                              .read<ClientViewModel>()
+                                              .deleteCustomer(client.id);
+
+                                          if (mounted) {
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                  "Cliente removido com sucesso!",
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                        } catch (e) {
+                                          if (mounted) {
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  "Erro ao apagar cliente: $e",
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                        }
+                                      }
+                                    },
                                     icon: const Icon(
                                       Icons.delete_outline,
                                       color: Colors.white,
@@ -220,7 +306,12 @@ class _ClientPageState extends State<ClientPage> {
 
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color(0xFF0D3F87),
-        onPressed: () {},
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (_) => const CreateClientDialog(),
+          );
+        },
         child: const Icon(Icons.person_add_alt_1, color: Colors.white),
       ),
 
