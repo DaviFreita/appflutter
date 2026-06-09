@@ -1,7 +1,7 @@
+import 'package:DasCobras/app/pages/home/home_page.dart';
 import 'package:DasCobras/app/pages/login/login_page.dart';
+import 'package:DasCobras/app/viewmodels/splash_viewmodel/splash_viewmodel.dart';
 import 'package:flutter/material.dart';
-import 'package:DasCobras/app/viewmodels/home_viewmodel/home_search_viewmodel.dart';
-import 'package:provider/provider.dart';
 
 class InitialSplashPage extends StatefulWidget {
   const InitialSplashPage({super.key});
@@ -14,16 +14,24 @@ class _InitialSplashPageState extends State<InitialSplashPage> {
   @override
   void initState() {
     super.initState();
+    Future.delayed(const Duration(seconds: 1), () async {
+      final splashViewModel = SplashViewmodel();
 
-    Future.delayed(const Duration(seconds: 1), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginPage()),
-      );
-    });
+      final canAccess = await splashViewModel.canEnterApp();
 
-    Future.microtask(() {
-      context.read<HomeSearchViewmodel>().loadProduct();
+      if (!mounted) return;
+
+      if (canAccess) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const HomePage()),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginPage()),
+        );
+      }
     });
   }
 

@@ -152,11 +152,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       if (!context.mounted) return;
 
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Usuário cadastrado. Verifique seu email.',
-                          ),
-                        ),
+                        const SnackBar(content: Text('Usuário cadastrado.')),
                       );
 
                       Navigator.pushReplacement(
