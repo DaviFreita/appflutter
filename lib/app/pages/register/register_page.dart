@@ -73,7 +73,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
                 inputFormatters: [Mask.cpfMaskFormatter],
 
-                validator: (value) => UtilsValidators.cpf(value),
+                validator: (value) => PersonalValidation.cpf(value),
               ),
 
               const SizedBox(height: 20),
@@ -102,7 +102,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
                 decoration: const InputDecoration(labelText: 'Senha'),
 
-                validator: (value) => UtilsValidators.password(value),
+                validator: (value) => PersonalValidation.password(value),
               ),
 
               const SizedBox(height: 30),

@@ -97,7 +97,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
 
-                validator: (value) => UtilsValidators.passwordBasic(value),
+                validator: (value) => PersonalValidation.passwordBasic(value),
               ),
               const SizedBox(height: 30),
 

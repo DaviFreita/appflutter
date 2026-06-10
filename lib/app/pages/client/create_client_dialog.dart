@@ -30,13 +30,18 @@ class _CreateClientDialogState extends State<CreateClientDialog> {
 
   final _formKey = GlobalKey<FormState>();
 
-  String? selectedState;
-
   bool loading = false;
+
+  String? errorMessage;
+  String personType = 'PF';
+  String? selectedState;
 
   Future<void> saveCustomer() async {
     try {
-      setState(() => loading = true);
+      setState(() {
+        loading = true;
+        errorMessage = null;
+      });
 
       await context.read<ClientViewModel>().addCustomer(
         name: nameController.text,
@@ -52,17 +57,19 @@ class _CreateClientDialogState extends State<CreateClientDialog> {
         address: addressController.text,
       );
 
-      if (mounted) {
-        Navigator.pop(context);
+      if (!mounted) return;
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Cliente cadastrado com sucesso!")),
-        );
-      }
+      Navigator.pop(context);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Cliente cadastrado com sucesso!")),
+      );
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Erro: $e")));
+      if (!mounted) return;
+
+      setState(() {
+        errorMessage = e.toString().replaceFirst('Exception: ', '');
+      });
     } finally {
       if (mounted) {
         setState(() => loading = false);
@@ -127,50 +134,58 @@ class _CreateClientDialogState extends State<CreateClientDialog> {
                   keyboardType: TextInputType.name,
                 ),
 
+                DropdownButtonFormField<String>(
+                  value: personType,
+                  decoration: InputDecoration(
+                    labelText: 'Tipo de cliente',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'PF', child: Text('Pessoa Física')),
+                    DropdownMenuItem(
+                      value: 'PJ',
+                      child: Text('Pessoa Jurídica'),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      personType = value!;
+                      cpfController.clear();
+                    });
+                  },
+                ),
+
+                const SizedBox(height: 10),
+
                 buildField(
-                  "CPF/CNPJ",
+                  personType == 'PF' ? 'CPF' : 'CNPJ',
                   cpfController,
                   keyboardType: TextInputType.number,
                   inputFormatters: [
-                    TextInputFormatter.withFunction((oldValue, newValue) {
-                      final digits = newValue.text.replaceAll(
-                        RegExp(r'\D'),
-                        '',
-                      );
-
-                      if (digits.length <= 11) {
-                        return Mask.cpfMaskFormatter.formatEditUpdate(
-                          oldValue,
-                          newValue,
-                        );
-                      } else {
-                        return Mask.cnpjMaskFormatter.formatEditUpdate(
-                          oldValue,
-                          newValue,
-                        );
-                      }
-                    }),
+                    personType == 'PF'
+                        ? Mask.cpfMaskFormatter
+                        : Mask.cnpjMaskFormatter,
                   ],
                   validator: (value) {
-                    validator:
-                    (value) {
-                      final text = value ?? '';
-                      final digits = text.replaceAll(RegExp(r'\D'), '');
+                    if (value == null || value.isEmpty) {
+                      return personType == 'PF'
+                          ? 'CPF obrigatório'
+                          : 'CNPJ obrigatório';
+                    }
 
-                      if (digits.isEmpty) {
-                        return 'CPF ou CNPJ obrigatório';
-                      }
+                    final valid = personType == 'PF'
+                        ? PersonalValidation.utilsCpf(value)
+                        : PersonalValidation.utilsCnpj(value);
 
-                      if (digits.length != 11 && digits.length != 14) {
-                        return 'CPF ou CNPJ incompleto';
-                      }
+                    if (!valid) {
+                      return personType == 'PF'
+                          ? 'CPF inválido'
+                          : 'CNPJ inválido';
+                    }
 
-                      if (!UtilsValidators.utilsCpfCnpj(digits)) {
-                        return 'CPF ou CNPJ inválido';
-                      }
-
-                      return null;
-                    };
+                    return null;
                   },
                 ),
 
@@ -210,6 +225,7 @@ class _CreateClientDialogState extends State<CreateClientDialog> {
                   "Email",
                   emailController,
                   validator: (value) => PersonalDataValidation.email(value),
+                  keyboardType: TextInputType.emailAddress,
                 ),
 
                 buildField(
@@ -265,7 +281,7 @@ class _CreateClientDialogState extends State<CreateClientDialog> {
                         validator: (value) => AddressValidation.city(value),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: DropdownButtonFormField<String>(
                         value: selectedState,
@@ -295,6 +311,19 @@ class _CreateClientDialogState extends State<CreateClientDialog> {
 
                 const SizedBox(height: 10),
 
+                if (errorMessage != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Text(
+                      errorMessage!,
+                      style: const TextStyle(
+                        color: Colors.red,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+
                 SizedBox(
                   width: double.infinity,
                   height: 55,
@@ -305,10 +334,7 @@ class _CreateClientDialogState extends State<CreateClientDialog> {
                     onPressed: loading
                         ? null
                         : () async {
-                            if (!_formKey.currentState!.validate()) {
-                              return;
-                            }
-
+                            if (!_formKey.currentState!.validate()) return;
                             await saveCustomer();
                           },
                     child: loading

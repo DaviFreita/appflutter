@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/services.dart';
 
 import '../../model/customer_model.dart';
 import '../../viewmodels/client_viewmodel/client_viewmodel.dart';
+import 'package:DasCobras/app/service/validation/personal_validation.dart';
+import 'package:DasCobras/app/service/validation/address_validation.dart';
+import 'package:DasCobras/app/service/validation/mask.dart';
+import 'package:DasCobras/app/service/validation/personal%20_data_validation.dart';
 
 class EditClientDialog extends StatefulWidget {
   final CustomerModel client;
@@ -26,8 +31,12 @@ class _EditClientDialogState extends State<EditClientDialog> {
   late TextEditingController cityController;
   late TextEditingController stateController;
 
+  final _formKey = GlobalKey<FormState>();
   bool loading = false;
 
+  String? errorMessage;
+  String personType = 'PF';
+  String? selectedState;
   @override
   void initState() {
     super.initState();
@@ -52,6 +61,7 @@ class _EditClientDialogState extends State<EditClientDialog> {
 
     cityController = TextEditingController(text: widget.client.city);
     stateController = TextEditingController(text: widget.client.state);
+    selectedState = widget.client.state;
   }
 
   Future<void> updateCustomer() async {
@@ -91,13 +101,28 @@ class _EditClientDialogState extends State<EditClientDialog> {
     }
   }
 
-  Widget buildField(String label, TextEditingController controller) {
+  Widget buildField(
+    String label,
+    TextEditingController controller, {
+    String? Function(String?)? validator,
+    TextInputType? keyboardType,
+    List<TextInputFormatter>? inputFormatters,
+    bool readOnly = false,
+    VoidCallback? onTap,
+    Widget? suffixIcon,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: TextField(
+      child: TextFormField(
         controller: controller,
+        keyboardType: keyboardType,
+        validator: validator,
+        inputFormatters: inputFormatters,
+        readOnly: readOnly,
+        onTap: onTap,
         decoration: InputDecoration(
           labelText: label,
+          suffixIcon: suffixIcon,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
         ),
       ),
@@ -111,67 +136,241 @@ class _EditClientDialogState extends State<EditClientDialog> {
       child: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(20),
-          child: Column(
-            children: [
-              const Text(
-                "Editar Cliente",
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF0D3F87),
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              buildField("Nome", nameController),
-
-              buildField("CPF/CNPJ", cpfController),
-
-              buildField("Data de nascimento", birthDateController),
-
-              buildField("Telefone", phoneController),
-
-              buildField("Email", emailController),
-
-              buildField("Rua", addressController),
-
-              Row(
-                children: [
-                  Expanded(child: buildField("Número", houseNumberController)),
-                  const SizedBox(width: 10),
-                  Expanded(child: buildField("CEP", cepController)),
-                ],
-              ),
-
-              buildField("Bairro", neighborhoodController),
-
-              Row(
-                children: [
-                  Expanded(child: buildField("Cidade", cityController)),
-                  const SizedBox(width: 10),
-                  Expanded(child: buildField("Estado", stateController)),
-                ],
-              ),
-              const SizedBox(height: 15),
-
-              SizedBox(
-                width: double.infinity,
-                height: 55,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0D3F87),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                const Text(
+                  "Editar Cliente",
+                  style: TextStyle(
+                    fontSize: 28,
+                    color: Color(0xFF0D3F87),
+                    fontWeight: FontWeight.bold,
                   ),
-                  onPressed: loading ? null : updateCustomer,
-                  child: loading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text(
-                          "Salvar Alterações",
-                          style: TextStyle(color: Colors.white, fontSize: 18),
-                        ),
                 ),
-              ),
-            ],
+
+                const SizedBox(height: 20),
+
+                buildField(
+                  "Nome",
+                  nameController,
+                  validator: (value) => PersonalDataValidation.name(value),
+                  keyboardType: TextInputType.name,
+                ),
+
+                DropdownButtonFormField<String>(
+                  value: personType,
+                  decoration: InputDecoration(
+                    labelText: 'Tipo de cliente',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'PF', child: Text('Pessoa Física')),
+                    DropdownMenuItem(
+                      value: 'PJ',
+                      child: Text('Pessoa Jurídica'),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      personType = value!;
+                      cpfController.clear();
+                    });
+                  },
+                ),
+
+                const SizedBox(height: 10),
+
+                buildField(
+                  personType == 'PF' ? 'CPF' : 'CNPJ',
+                  cpfController,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    personType == 'PF'
+                        ? Mask.cpfMaskFormatter
+                        : Mask.cnpjMaskFormatter,
+                  ],
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return personType == 'PF'
+                          ? 'CPF obrigatório'
+                          : 'CNPJ obrigatório';
+                    }
+
+                    final valid = personType == 'PF'
+                        ? PersonalValidation.utilsCpf(value)
+                        : PersonalValidation.utilsCnpj(value);
+
+                    if (!valid) {
+                      return personType == 'PF'
+                          ? 'CPF inválido'
+                          : 'CNPJ inválido';
+                    }
+
+                    return null;
+                  },
+                ),
+
+                buildField(
+                  "Data de nascimento",
+                  birthDateController,
+                  readOnly: true,
+
+                  suffixIcon: const Icon(Icons.calendar_today),
+                  onTap: () async {
+                    final DateTime? date = await showDatePicker(
+                      context: context,
+                      initialDate: DateTime(2000),
+                      firstDate: DateTime(1900),
+                      lastDate: DateTime.now(),
+                    );
+
+                    if (date != null) {
+                      setState(() {
+                        birthDateController.text =
+                            '${date.day}/${date.month}/${date.year}';
+                      });
+                    }
+                  },
+                  validator: (value) => PersonalDataValidation.birth(value),
+                ),
+
+                buildField(
+                  "Telefone",
+                  phoneController,
+                  keyboardType: TextInputType.phone,
+                  inputFormatters: [Mask.phoneMaskFormatter],
+                  validator: (value) => PersonalDataValidation.number(value),
+                ),
+
+                buildField(
+                  "Email",
+                  emailController,
+                  validator: (value) => PersonalDataValidation.email(value),
+                  keyboardType: TextInputType.emailAddress,
+                ),
+
+                buildField(
+                  "Rua",
+                  addressController,
+                  keyboardType: TextInputType.streetAddress,
+                  validator: (value) => AddressValidation.road(value),
+                ),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: buildField(
+                        "Número",
+                        houseNumberController,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                        validator: (value) =>
+                            AddressValidation.numberHouse(value),
+                      ),
+                    ),
+
+                    const SizedBox(width: 10),
+
+                    Expanded(
+                      child: buildField(
+                        "CEP",
+                        cepController,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [Mask.cepMaskFormatter],
+                        validator: (value) => AddressValidation.cep(value),
+                      ),
+                    ),
+                  ],
+                ),
+
+                buildField(
+                  "Bairro",
+                  neighborhoodController,
+                  keyboardType: TextInputType.streetAddress,
+                  validator: (value) => AddressValidation.neighborhood(value),
+                ),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: buildField(
+                        "Cidade",
+                        cityController,
+                        keyboardType: TextInputType.name,
+                        validator: (value) => AddressValidation.city(value),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        value: selectedState,
+                        decoration: InputDecoration(
+                          labelText: 'Estado',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        items: AddressValidation.states.map((state) {
+                          return DropdownMenuItem(
+                            value: state,
+                            child: Text(state),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            selectedState = value;
+                            stateController.text = value ?? '';
+                          });
+                        },
+                        validator: (value) => AddressValidation.state(value),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 10),
+
+                if (errorMessage != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Text(
+                      errorMessage!,
+                      style: const TextStyle(
+                        color: Colors.red,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+
+                SizedBox(
+                  width: double.infinity,
+                  height: 55,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0D3F87),
+                    ),
+                    onPressed: loading
+                        ? null
+                        : () async {
+                            if (!_formKey.currentState!.validate()) return;
+                            await updateCustomer();
+                          },
+                    child: loading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text(
+                            "Salvar Cliente",
+                            style: TextStyle(color: Colors.white, fontSize: 18),
+                          ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

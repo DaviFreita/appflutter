@@ -1,4 +1,4 @@
-class UtilsValidators {
+class PersonalValidation {
   static bool utilsCpfCnpj(String value) {
     value = value.replaceAll(RegExp(r'[.\-/]'), '');
     final digits = value.replaceAll(RegExp(r'\D'), '');

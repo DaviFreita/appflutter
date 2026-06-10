@@ -53,13 +53,9 @@ class ClientViewModel extends ChangeNotifier {
     required String address,
   }) async {
     try {
-      // Converte de dd/MM/yyyy para yyyy-MM-dd
       final formattedDate = DateFormat(
         'yyyy-MM-dd',
       ).format(DateFormat('dd/MM/yyyy').parse(birthDate));
-
-      print('DATA ORIGINAL: $birthDate');
-      print('DATA FORMATADA: $formattedDate');
 
       await supabase.from('customer').insert({
         'name': name,
@@ -75,13 +71,12 @@ class ClientViewModel extends ChangeNotifier {
         'address': address,
       });
 
-      print('CLIENTE SALVO COM SUCESSO');
-
       await loadCustomers();
-    } catch (e) {
-      print('ERRO AO SALVAR CLIENTE');
-      print(e);
-      rethrow;
+    } on PostgrestException catch (e) {
+      if (e.code == '23505') {
+        throw Exception('Cliente já cadastrado.');
+      }
+      throw Exception(e.message);
     }
   }
 
