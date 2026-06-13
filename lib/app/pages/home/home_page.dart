@@ -1,3 +1,4 @@
+import 'package:DasCobras/app/pages/sales/sales_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -5,8 +6,8 @@ import 'package:DasCobras/app/viewmodels/home_viewmodel/home_search_viewmodel.da
 import 'package:DasCobras/app/pages/home/edit_product_dialog.dart';
 import 'package:DasCobras/app/pages/home/add_product_dialog.dart';
 import 'package:DasCobras/app/pages/client/client_page.dart';
-import 'package:DasCobras/app/pages/sales/sales_page.dart';
 import 'package:DasCobras/app/pages/reports/reports_page.dart';
+import 'package:DasCobras/app/pages/widgets/custom_bottom_nav.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -389,57 +390,35 @@ class _HomePageState extends State<HomePage> {
         child: const Icon(Icons.add, color: Colors.white, size: 35),
       ),
 
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        currentIndex: 0,
-        selectedItemColor: const Color(0xFF0D3F87),
-        unselectedItemColor: const Color(0xFF0D3F87),
-        showUnselectedLabels: true,
+      bottomNavigationBar: CustomBottomNav(
+        currentIndex: 0, // Home
         onTap: (index) {
           switch (index) {
             case 0:
-              break;
+              break; // Já está na Home
 
             case 1:
-              Navigator.push(
+              Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (_) => const ClientPage()),
               );
               break;
 
             case 2:
-              Navigator.push(
+              Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (_) => const SalesPage()),
               );
               break;
 
             case 3:
-              Navigator.push(
+              Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (_) => const ReportsPage()),
               );
               break;
           }
         },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            label: 'Início',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.people_outline),
-            label: 'Clientes',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_cart_outlined),
-            label: 'Venda',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart_outlined),
-            label: 'Relatórios',
-          ),
-        ],
       ),
     );
   }

@@ -4,6 +4,7 @@ import 'package:DasCobras/app/pages/sales/sales_page.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:DasCobras/app/pages/widgets/custom_bottom_nav.dart';
 
 import '../../viewmodels/reports_viewmodel/reports_viewmodel.dart';
 
@@ -18,16 +19,16 @@ class _ReportsPageState extends State<ReportsPage> {
   String selectedFilter = 'Hoje';
 
   @override
-void initState() {
-  super.initState();
+  void initState() {
+    super.initState();
 
-  Future.microtask(() async {
-    selectedFilter = 'Hoje';
+    Future.microtask(() async {
+      selectedFilter = 'Hoje';
 
-    await context.read<ReportsViewModel>().loadToday();
-    await context.read<ReportsViewModel>().loadLowStockProducts();
-  });
-}
+      await context.read<ReportsViewModel>().loadToday();
+      await context.read<ReportsViewModel>().loadLowStockProducts();
+    });
+  }
 
   Future<void> _selectCustomPeriod(BuildContext context) async {
     final vm = context.read<ReportsViewModel>();
@@ -62,7 +63,12 @@ void initState() {
       backgroundColor: Colors.white,
 
       appBar: AppBar(
-        title: const Text('Relatórios'),
+        automaticallyImplyLeading: false,
+        title: const Text(
+          'Relatórios',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        centerTitle: false,
         backgroundColor: const Color(0xFF0D3F87),
         foregroundColor: Colors.white,
       ),
@@ -99,6 +105,10 @@ void initState() {
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF0D3F87), // texto e ícone
+                      side: const BorderSide(color: Color(0xFF0D3F87)),
+                    ),
                     onPressed: () => _selectCustomPeriod(context),
                     icon: const Icon(Icons.date_range),
                     label: const Text('Filtrar por período'),
@@ -149,16 +159,34 @@ void initState() {
                   const Text('Nenhum produto vendido nesse período')
                 else
                   ...vm.topProducts.map((product) {
-                    return Card(
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: const Color(0xFF0D3F87),
+                          width: 1,
+                        ),
+                      ),
                       child: ListTile(
                         leading: const Icon(
                           Icons.inventory_2_outlined,
                           color: Color(0xFF0D3F87),
                         ),
-                        title: Text(product['name']),
+                        title: Text(
+                          product['name'],
+                          style: const TextStyle(
+                            color: Color(0xFF0D3F87),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                         trailing: Text(
                           '${product['quantity']} vendidos',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            color: Color(0xFF0D3F87),
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     );
@@ -169,26 +197,42 @@ void initState() {
                   alignment: Alignment.centerLeft,
                   child: Text(
                     'Produtos em Falta',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.red,
-                    ),
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                   ),
                 ),
 
                 const SizedBox(height: 10),
 
                 if (vm.lowStockProducts.isEmpty)
-                  const Card(
-                    child: Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Text('Nenhum produto com estoque baixo'),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: const Color(0xFF0D3F87),
+                        width: 1,
+                      ),
+                    ),
+                    child: const Text(
+                      'Nenhum produto com estoque baixo',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Color(0xFF0D3F87),
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   )
                 else
                   ...vm.lowStockProducts.map((product) {
-                    return Card(
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.red, width: 1),
+                      ),
                       child: ListTile(
                         leading: const Icon(
                           Icons.warning_amber_rounded,
@@ -210,13 +254,8 @@ void initState() {
           );
         },
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
+      bottomNavigationBar: CustomBottomNav(
         currentIndex: 3, // Relatórios
-        selectedItemColor: const Color(0xFF0D3F87),
-        unselectedItemColor: const Color(0xFF0D3F87),
-        showUnselectedLabels: true,
-
         onTap: (index) {
           switch (index) {
             case 0:
@@ -241,29 +280,9 @@ void initState() {
               break;
 
             case 3:
-              // Já está na tela de relatórios
               break;
           }
         },
-
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            label: 'Início',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.people_outline),
-            label: 'Clientes',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_cart_outlined),
-            label: 'Venda',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart_outlined),
-            label: 'Relatórios',
-          ),
-        ],
       ),
     );
   }

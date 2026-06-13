@@ -127,7 +127,7 @@ class ReportsViewModel extends ChangeNotifier {
 
   Future<void> loadLowStockProducts() async {
     final response = await supabase
-        .from('products')
+        .from('product')
         .select()
         .lte('stock', 5); // produtos com estoque <= 5
 

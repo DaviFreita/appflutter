@@ -12,6 +12,7 @@ import 'package:DasCobras/app/pages/client/view_client_dialog.dart';
 import '../../viewmodels/sale_viewmodel/sale_viewmodel.dart';
 import 'cart_dialog.dart';
 import 'package:DasCobras/app/pages/sales/add_product_cart_dialog.dart';
+import 'package:DasCobras/app/pages/widgets/custom_bottom_nav.dart';
 
 class SalesPage extends StatefulWidget {
   const SalesPage({super.key});
@@ -534,13 +535,8 @@ class _SalesPageState extends State<SalesPage> {
           );
         },
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 2,
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: const Color(0xFF0D3F87),
-        unselectedItemColor: const Color(0xFF0D3F87),
-        showUnselectedLabels: true,
-
+      bottomNavigationBar: CustomBottomNav(
+        currentIndex: 2, // Tela de Venda
         onTap: (index) {
           switch (index) {
             case 0:
@@ -558,7 +554,7 @@ class _SalesPageState extends State<SalesPage> {
               break;
 
             case 2:
-              break;
+              break; // Já está na tela de venda
 
             case 3:
               Navigator.pushReplacement(
@@ -568,25 +564,6 @@ class _SalesPageState extends State<SalesPage> {
               break;
           }
         },
-
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            label: 'Início',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.people_outline),
-            label: 'Clientes',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_cart_outlined),
-            label: 'Venda',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart_outlined),
-            label: 'Relatórios',
-          ),
-        ],
       ),
     );
   }

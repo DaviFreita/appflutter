@@ -1,12 +1,13 @@
+import 'package:DasCobras/app/pages/sales/sales_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:DasCobras/app/pages/home/home_page.dart';
-import 'package:DasCobras/app/pages/sales/sales_page.dart';
 import 'package:DasCobras/app/pages/reports/reports_page.dart';
 import 'package:DasCobras/app/pages/client/create_client_dialog.dart';
 import 'package:DasCobras/app/pages/client/edit_client_dialog.dart';
 import 'view_client_dialog.dart';
+import 'package:DasCobras/app/pages/widgets/custom_bottom_nav.dart';
 
 import '../../viewmodels/client_viewmodel/client_viewmodel.dart';
 
@@ -318,13 +319,8 @@ class _ClientPageState extends State<ClientPage> {
         child: const Icon(Icons.person_add_alt_1, color: Colors.white),
       ),
 
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        currentIndex: 1,
-        selectedItemColor: const Color(0xFF0D3F87),
-        unselectedItemColor: const Color(0xFF0D3F87),
-        showUnselectedLabels: true,
-
+      bottomNavigationBar: CustomBottomNav(
+        currentIndex: 1, // Clientes
         onTap: (index) {
           switch (index) {
             case 0:
@@ -335,7 +331,7 @@ class _ClientPageState extends State<ClientPage> {
               break;
 
             case 1:
-              break;
+              break; // Já está em Clientes
 
             case 2:
               Navigator.pushReplacement(
@@ -352,25 +348,6 @@ class _ClientPageState extends State<ClientPage> {
               break;
           }
         },
-
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            label: 'Início',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.people_outline),
-            label: 'Clientes',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_cart_outlined),
-            label: 'Venda',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart_outlined),
-            label: 'Relatórios',
-          ),
-        ],
       ),
     );
   }
