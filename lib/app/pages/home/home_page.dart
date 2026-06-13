@@ -17,16 +17,6 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   String selectedCategory = 'Todos';
-  int currentIndex = 0;
-
-  final List<String> categories = [
-    'Todos',
-    'Bebida',
-    'Massas',
-    'Ração',
-    'Refrigerante',
-    'Grãos',
-  ];
 
   @override
   void initState() {
@@ -37,38 +27,32 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  void openCategoryFilter() {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return SafeArea(
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: categories.length,
-            itemBuilder: (context, index) {
-              final category = categories[index];
-
-              return ListTile(
-                title: Text(category),
-                trailing: selectedCategory == category
-                    ? const Icon(Icons.check, color: Color(0xFF0D3F87))
-                    : null,
-                onTap: () {
-                  setState(() {
-                    selectedCategory = category;
-                  });
-
-                  context.read<HomeSearchViewmodel>().filterByCategory(
-                    category,
-                  );
-
-                  Navigator.pop(context);
-                },
-              );
-            },
+  Widget filterButton({
+    required String text,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFF0D3F87) : Colors.white,
+          border: Border.all(color: const Color(0xFF0D3F87)),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Center(
+          child: Text(
+            text,
+            style: TextStyle(
+              color: selected ? Colors.white : const Color(0xFF0D3F87),
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+            ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 
@@ -114,46 +98,29 @@ class _HomePageState extends State<HomePage> {
 
             const SizedBox(height: 10),
 
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0D3F87),
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                    child: Text(
-                      selectedCategory,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
+            Consumer<HomeSearchViewmodel>(
+              builder: (context, vm, _) {
+                return SizedBox(
+                  height: 42,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    children: vm.categories.map((category) {
+                      return filterButton(
+                        text: category,
+                        selected: selectedCategory == category,
+                        onTap: () {
+                          setState(() {
+                            selectedCategory = category;
+                          });
 
-                  const SizedBox(width: 8),
-
-                  GestureDetector(
-                    onTap: openCategoryFilter,
-                    child: Container(
-                      padding: const EdgeInsets.all(5),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: const Color(0xFF0D3F87)),
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                      child: const Icon(
-                        Icons.filter_alt_outlined,
-                        color: Color(0xFF0D3F87),
-                      ),
-                    ),
+                          vm.filterByCategory(category);
+                        },
+                      );
+                    }).toList(),
                   ),
-                ],
-              ),
+                );
+              },
             ),
 
             const SizedBox(height: 10),
@@ -171,12 +138,7 @@ class _HomePageState extends State<HomePage> {
                   }
 
                   return ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(
-                      10,
-                      0,
-                      10,
-                      100, // espaço para o FloatingActionButton
-                    ),
+                    padding: const EdgeInsets.fromLTRB(10, 0, 10, 100),
                     itemCount: service.filteredProducts.length,
                     itemBuilder: (context, index) {
                       final product = service.filteredProducts[index];
@@ -214,6 +176,11 @@ class _HomePageState extends State<HomePage> {
                               child: Image.network(
                                 product.imageurl,
                                 fit: BoxFit.contain,
+                                errorBuilder: (_, __, ___) {
+                                  return const Icon(
+                                    Icons.image_not_supported_outlined,
+                                  );
+                                },
                               ),
                             ),
 
@@ -292,7 +259,6 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                   child: IconButton(
                                     onPressed: () {
-                                      print('Categoria: ${product.category}');
                                       showDialog(
                                         context: context,
                                         builder: (context) =>
@@ -369,15 +335,17 @@ class _HomePageState extends State<HomePage> {
                                             );
                                           }
                                         } catch (e) {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                "Erro ao apagar: $e",
+                                          if (mounted) {
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  "Erro ao apagar: $e",
+                                                ),
                                               ),
-                                            ),
-                                          );
+                                            );
+                                          }
                                         }
                                       }
                                     },
@@ -418,11 +386,9 @@ class _HomePageState extends State<HomePage> {
         selectedItemColor: const Color(0xFF0D3F87),
         unselectedItemColor: const Color(0xFF0D3F87),
         showUnselectedLabels: true,
-
         onTap: (index) {
           switch (index) {
             case 0:
-              // Já está na Home
               break;
 
             case 1:
@@ -447,7 +413,6 @@ class _HomePageState extends State<HomePage> {
               break;
           }
         },
-
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined),

@@ -7,6 +7,7 @@ class HomeSearchViewmodel extends ChangeNotifier {
 
   List<ProductSearchModel> products = [];
   List<ProductSearchModel> filteredProducts = [];
+  List<String> categories = ['Todos'];
 
   Future<void> loadProduct() async {
     try {
@@ -115,5 +116,27 @@ class HomeSearchViewmodel extends ChangeNotifier {
 
   Future<void> refreshProducts() async {
     await loadProduct();
+  }
+
+  Future<void> loadCategories() async {
+    try {
+      final response = await supabase.from('product').select('category');
+
+      final uniqueCategories = response
+          .map((e) => e['category'].toString())
+          .toSet()
+          .toList();
+
+      categories = ['Todos', ...uniqueCategories];
+
+      notifyListeners();
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  Future<void> loadInitialData() async {
+    await loadProduct();
+    await loadCategories();
   }
 }
