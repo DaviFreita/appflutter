@@ -104,13 +104,16 @@ class _SalesPageState extends State<SalesPage> {
               child: SearchBar(
                 controller: clientSearchController,
                 hintText: 'Buscar Cliente...',
+                hintStyle: const WidgetStatePropertyAll(
+                  TextStyle(color: Color(0xFF0D3F87)),
+                ),
                 elevation: const WidgetStatePropertyAll(0),
                 backgroundColor: const WidgetStatePropertyAll(Colors.white),
-                trailing: const [Icon(Icons.search, color: Colors.grey)],
+                trailing: const [Icon(Icons.search, color: Color(0xFF0D3F87))],
                 shape: WidgetStatePropertyAll(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
-                    side: BorderSide(color: Colors.grey.shade400),
+                    side: BorderSide(color: Color(0xFF0D3F87)),
                   ),
                 ),
                 onChanged: (value) {
@@ -290,12 +293,15 @@ class _SalesPageState extends State<SalesPage> {
               child: SearchBar(
                 hintText: 'Buscar produto...',
                 elevation: const WidgetStatePropertyAll(0),
+                hintStyle: const WidgetStatePropertyAll(
+                  TextStyle(color: Color(0xFF0D3F87)),
+                ),
                 backgroundColor: const WidgetStatePropertyAll(Colors.white),
-                trailing: const [Icon(Icons.search, color: Colors.grey)],
+                trailing: const [Icon(Icons.search, color: Color(0xFF0D3F87))],
                 shape: WidgetStatePropertyAll(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
-                    side: BorderSide(color: Colors.grey.shade400),
+                    side: BorderSide(color: Color(0xFF0D3F87)),
                   ),
                 ),
                 onChanged: (value) {
@@ -445,22 +451,29 @@ class _SalesPageState extends State<SalesPage> {
                                       vertical: 4,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF0D3F87),
+                                      color: product.stock > 0
+                                          ? const Color(0xFF0D3F87)
+                                          : Colors.red,
                                       borderRadius: BorderRadius.circular(5),
                                     ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        const Icon(
-                                          Icons.inventory_2_outlined,
+                                        Icon(
+                                          product.stock > 0
+                                              ? Icons.inventory_2_outlined
+                                              : Icons.warning_amber_rounded,
                                           size: 14,
                                           color: Colors.white,
                                         ),
                                         const SizedBox(width: 4),
                                         Text(
-                                          '${product.stock} em estoque',
+                                          product.stock > 0
+                                              ? '${product.stock} em estoque'
+                                              : 'Sem estoque',
                                           style: const TextStyle(
                                             color: Colors.white,
+                                            fontWeight: FontWeight.w600,
                                           ),
                                         ),
                                       ],

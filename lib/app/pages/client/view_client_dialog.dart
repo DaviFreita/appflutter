@@ -38,10 +38,14 @@ class ViewClientDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      insetPadding: const EdgeInsets.all(15),
       child: SingleChildScrollView(
-        child: Padding(
+        child: Container(
           padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFF0D3F87), width: 2),
+          ),
           child: Column(
             children: [
               const Text(

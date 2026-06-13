@@ -126,6 +126,11 @@ class _EditProductDialogState extends State<EditProductDialog> {
       child: Container(
         width: 450,
         padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFF0D3F87), width: 2),
+        ),
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
