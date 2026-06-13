@@ -28,32 +28,37 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  Widget filterButton({
-    required String text,
-    required bool selected,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(right: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: selected ? const Color(0xFF0D3F87) : Colors.white,
-          border: Border.all(color: const Color(0xFF0D3F87)),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Center(
-          child: Text(
-            text,
-            style: TextStyle(
-              color: selected ? Colors.white : const Color(0xFF0D3F87),
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
-            ),
+  void openCategoryFilter() {
+    final vm = context.read<HomeSearchViewmodel>();
+
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: vm.categories.length,
+            itemBuilder: (context, index) {
+              final category = vm.categories[index];
+
+              return ListTile(
+                title: Text(category),
+                trailing: selectedCategory == category
+                    ? const Icon(Icons.check, color: Color(0xFF0D3F87))
+                    : null,
+                onTap: () {
+                  setState(() {
+                    selectedCategory = category;
+                  });
+
+                  vm.filterByCategory(category);
+                  Navigator.pop(context);
+                },
+              );
+            },
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -80,16 +85,13 @@ class _HomePageState extends State<HomePage> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: SearchBar(
                 hintText: 'Buscar produto...',
-                hintStyle: const WidgetStatePropertyAll(
-                  TextStyle(color: Color(0xFF0D3F87)),
-                ),
                 elevation: const WidgetStatePropertyAll(0),
                 backgroundColor: const WidgetStatePropertyAll(Colors.white),
-                trailing: const [Icon(Icons.search, color: Color(0xFF0D3F87))],
+                trailing: const [Icon(Icons.search, color: Colors.grey)],
                 shape: WidgetStatePropertyAll(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
-                    side: const BorderSide(color: Color(0xFF0D3F87)),
+                    side: BorderSide(color: Colors.grey.shade400),
                   ),
                 ),
                 onChanged: (value) {
@@ -102,29 +104,46 @@ class _HomePageState extends State<HomePage> {
 
             const SizedBox(height: 10),
 
-            Consumer<HomeSearchViewmodel>(
-              builder: (context, vm, _) {
-                return SizedBox(
-                  height: 42,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    children: vm.categories.map((category) {
-                      return filterButton(
-                        text: category,
-                        selected: selectedCategory == category,
-                        onTap: () {
-                          setState(() {
-                            selectedCategory = category;
-                          });
-
-                          vm.filterByCategory(category);
-                        },
-                      );
-                    }).toList(),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0D3F87),
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    child: Text(
+                      selectedCategory,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
-                );
-              },
+
+                  const SizedBox(width: 8),
+
+                  GestureDetector(
+                    onTap: openCategoryFilter,
+                    child: Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: const Color(0xFF0D3F87)),
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                      child: const Icon(
+                        Icons.filter_alt_outlined,
+                        color: Color(0xFF0D3F87),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
 
             const SizedBox(height: 10),
@@ -228,26 +247,20 @@ class _HomePageState extends State<HomePage> {
                                       vertical: 4,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: product.stock > 0
-                                          ? const Color(0xFF0D3F87)
-                                          : Color(0xFFF44336),
+                                      color: const Color(0xFF0D3F87),
                                       borderRadius: BorderRadius.circular(5),
                                     ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Icon(
-                                          product.stock > 0
-                                              ? Icons.inventory_2_outlined
-                                              : Icons.warning_amber_rounded,
+                                        const Icon(
+                                          Icons.inventory_2_outlined,
                                           size: 14,
                                           color: Colors.white,
                                         ),
                                         const SizedBox(width: 4),
                                         Text(
-                                          product.stock > 0
-                                              ? '${product.stock} em estoque'
-                                              : 'Sem estoque',
+                                          '${product.stock} em estoque',
                                           style: const TextStyle(
                                             color: Colors.white,
                                             fontWeight: FontWeight.w600,
@@ -395,22 +408,19 @@ class _HomePageState extends State<HomePage> {
         onTap: (index) {
           switch (index) {
             case 0:
-              break; // Já está na Home
-
+              break;
             case 1:
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (_) => const ClientPage()),
               );
               break;
-
             case 2:
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (_) => const SalesPage()),
               );
               break;
-
             case 3:
               Navigator.pushReplacement(
                 context,

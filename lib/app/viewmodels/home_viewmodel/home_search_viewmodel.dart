@@ -23,6 +23,16 @@ class HomeSearchViewmodel extends ChangeNotifier {
 
       products = response.map((e) => ProductSearchModel.fromMap(e)).toList();
 
+      categories = [
+        'Todos',
+        ...products
+            .map((product) => product.category.trim())
+            .where((category) => category.isNotEmpty)
+            .where((category) => category != 'Sem categoria')
+            .toSet()
+            .toList(),
+      ];
+
       filteredProducts = List.from(products);
 
       notifyListeners();
