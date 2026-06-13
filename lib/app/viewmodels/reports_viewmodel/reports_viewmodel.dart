@@ -11,6 +11,7 @@ class ReportsViewModel extends ChangeNotifier {
 
   List<Map<String, dynamic>> salesByDay = [];
   List<Map<String, dynamic>> topProducts = [];
+  List<Map<String, dynamic>> lowStockProducts = [];
 
   DateTime? startDate;
   DateTime? endDate;
@@ -123,4 +124,16 @@ class ReportsViewModel extends ChangeNotifier {
 
     topProducts = topProducts.take(5).toList();
   }
+
+  Future<void> loadLowStockProducts() async {
+    final response = await supabase
+        .from('products')
+        .select()
+        .lte('stock', 5); // produtos com estoque <= 5
+
+    lowStockProducts = List<Map<String, dynamic>>.from(response);
+
+    notifyListeners();
+  }
+  
 }

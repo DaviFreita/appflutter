@@ -50,13 +50,16 @@ class _ClientPageState extends State<ClientPage> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: SearchBar(
                 hintText: 'Buscar cliente...',
+                hintStyle: const WidgetStatePropertyAll(
+                  TextStyle(color: Color(0xFF0D3F87)),
+                ),
                 elevation: const WidgetStatePropertyAll(0),
                 backgroundColor: const WidgetStatePropertyAll(Colors.white),
-                trailing: const [Icon(Icons.search, color: Colors.grey)],
+                trailing: const [Icon(Icons.search, color: Color(0xFF0D3F87))],
                 shape: WidgetStatePropertyAll(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
-                    side: BorderSide(color: Colors.grey.shade400),
+                    side: BorderSide(color: Color(0xFF0D3F87)),
                   ),
                 ),
                 onChanged: (value) {

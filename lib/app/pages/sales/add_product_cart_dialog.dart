@@ -7,40 +7,54 @@ import '../../viewmodels/sale_viewmodel/sale_viewmodel.dart';
 class AddProductCartDialog extends StatefulWidget {
   final ProductSearchModel product;
 
-  const AddProductCartDialog({
-    super.key,
-    required this.product,
-  });
+  const AddProductCartDialog({super.key, required this.product});
 
   @override
-  State<AddProductCartDialog> createState() =>
-      _AddProductCartDialogState();
+  State<AddProductCartDialog> createState() => _AddProductCartDialogState();
 }
 
-class _AddProductCartDialogState
-    extends State<AddProductCartDialog> {
-  int quantity = 1;
+class _AddProductCartDialogState extends State<AddProductCartDialog> {
+  final TextEditingController quantityController = TextEditingController(
+    text: "1",
+  );
 
+  int quantity = 1;
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      child: SizedBox(
-        width: 320,
-        child: Padding(
-          padding: const EdgeInsets.all(15),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.all(20),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.85,
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFF0D3F87), width: 2),
+          ),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
+                  Align(
+                    alignment: Alignment.topRight,
+                    child: IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ),
+
                   Container(
-                    width: 90,
-                    height: 90,
-                    padding: const EdgeInsets.all(5),
+                    width: 140,
+                    height: 140,
+                    padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      border: Border.all(
-                        color: const Color(0xFF0D3F87),
-                      ),
+                      border: Border.all(color: const Color(0xFF0D3F87)),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: Image.network(
                       widget.product.imageurl,
@@ -48,94 +62,207 @@ class _AddProductCartDialogState
                     ),
                   ),
 
-                  const SizedBox(width: 10),
+                  const SizedBox(height: 20),
 
-                  Expanded(
-                    child: Column(
-                      children: [
-                        const Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            "Quantidade",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                  Text(
+                    widget.product.name,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+
+                  const SizedBox(height: 15),
+
+                  Text(
+                    "R\$ ${widget.product.price.toStringAsFixed(2)}",
+                    style: const TextStyle(
+                      fontSize: 28,
+                      color: Colors.green,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: widget.product.stock > 0
+                          ? const Color(0xFF0D3F87)
+                          : Colors.red,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      widget.product.stock > 0
+                          ? "Estoque: ${widget.product.stock}"
+                          : "Sem estoque",
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 30),
+
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      "Quantidade:",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 15),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        style: IconButton.styleFrom(
+                          backgroundColor: const Color(0xFF0D3F87),
                         ),
+                        onPressed: () {
+                          if (quantity > 1) {
+                            setState(() {
+                              quantity--;
+                              quantityController.text = quantity.toString();
+                            });
+                          }
+                        },
+                        icon: const Icon(Icons.remove, color: Colors.white),
+                      ),
 
-                        const SizedBox(height: 8),
-
-                        DropdownButtonFormField<int>(
-                          value: quantity,
-                          decoration: const InputDecoration(
-                            border: OutlineInputBorder(),
-                            isDense: true,
-                          ),
-                          items: List.generate(
-                            widget.product.stock,
-                            (index) => DropdownMenuItem(
-                              value: index + 1,
-                              child: Text(
-                                "${index + 1}",
+                      SizedBox(
+                        width: 70,
+                        child: TextField(
+                          controller: quantityController,
+                          keyboardType: TextInputType.number,
+                          textAlign: TextAlign.center,
+                          decoration: InputDecoration(
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 10,
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF0D3F87),
+                                width: 2,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF0D3F87),
+                                width: 2,
                               ),
                             ),
                           ),
                           onChanged: (value) {
-                            setState(() {
-                              quantity = value!;
-                            });
+                            if (value.isEmpty) return;
+
+                            final qtd = int.tryParse(value);
+
+                            if (qtd == null) return;
+
+                            if (qtd > widget.product.stock) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text("Estoque insuficiente!"),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+
+                              quantity = widget.product.stock;
+                              quantityController.text = widget.product.stock
+                                  .toString();
+                              return;
+                            }
+
+                            if (qtd < 1) {
+                              quantity = 1;
+                              quantityController.text = "1";
+                              return;
+                            }
+
+                            quantity = qtd;
                           },
                         ),
+                      ),
 
-                        const SizedBox(height: 15),
-
-                        Row(
-                          children: [
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.green,
-                              ),
-                              onPressed: () {
-                                context
-                                    .read<SaleViewModel>()
-                                    .addProduct(
-                                      widget.product,
-                                      quantity,
-                                    );
-
-                                Navigator.pop(context);
-                              },
-                              child: const Icon(
-                                Icons.shopping_cart,
-                                color: Colors.white,
-                              ),
-                            ),
-
-                            const SizedBox(width: 10),
-
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
+                      IconButton(
+                        style: IconButton.styleFrom(
+                          backgroundColor: const Color(0xFF0D3F87),
+                        ),
+                        onPressed: () {
+                          if (quantity < widget.product.stock) {
+                            setState(() {
+                              quantity++;
+                              quantityController.text = quantity.toString();
+                            });
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Estoque insuficiente!"),
                                 backgroundColor: Colors.red,
                               ),
-                              onPressed: () {
-                                Navigator.pop(context);
-                              },
-                              child: const Icon(
-                                Icons.reply,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                            );
+                          }
+                        },
+                        icon: const Icon(Icons.add, color: Colors.white),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 30),
+
+                  SizedBox(
+                    width: double.infinity,
+                    height: 55,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0D3F87),
+                      ),
+                      onPressed: widget.product.stock == 0
+                          ? null
+                          : () {
+                              context.read<SaleViewModel>().addProduct(
+                                widget.product,
+                                quantity,
+                              );
+
+                              Navigator.pop(context);
+                            },
+                      icon: const Icon(
+                        Icons.shopping_cart,
+                        color: Colors.white,
+                      ),
+                      label: const Text(
+                        "Adicionar ao Carrinho",
+                        style: TextStyle(color: Colors.white, fontSize: 18),
+                      ),
                     ),
                   ),
                 ],
               ),
-            ],
+            ),
           ),
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    quantityController.dispose();
+    super.dispose();
   }
 }

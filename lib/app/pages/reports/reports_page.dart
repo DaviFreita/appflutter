@@ -1,3 +1,6 @@
+import 'package:DasCobras/app/pages/client/client_page.dart';
+import 'package:DasCobras/app/pages/home/home_page.dart';
+import 'package:DasCobras/app/pages/sales/sales_page.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -15,14 +18,16 @@ class _ReportsPageState extends State<ReportsPage> {
   String selectedFilter = 'Hoje';
 
   @override
-  void initState() {
-    super.initState();
+void initState() {
+  super.initState();
 
-    Future.microtask(() {
-      selectedFilter = 'Hoje';
-      context.read<ReportsViewModel>().loadToday();
-    });
-  }
+  Future.microtask(() async {
+    selectedFilter = 'Hoje';
+
+    await context.read<ReportsViewModel>().loadToday();
+    await context.read<ReportsViewModel>().loadLowStockProducts();
+  });
+}
 
   Future<void> _selectCustomPeriod(BuildContext context) async {
     final vm = context.read<ReportsViewModel>();
@@ -158,10 +163,107 @@ class _ReportsPageState extends State<ReportsPage> {
                       ),
                     );
                   }),
+                const SizedBox(height: 25),
+
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Produtos em Falta',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.red,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                if (vm.lowStockProducts.isEmpty)
+                  const Card(
+                    child: Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Text('Nenhum produto com estoque baixo'),
+                    ),
+                  )
+                else
+                  ...vm.lowStockProducts.map((product) {
+                    return Card(
+                      child: ListTile(
+                        leading: const Icon(
+                          Icons.warning_amber_rounded,
+                          color: Colors.red,
+                        ),
+                        title: Text(product['name']),
+                        trailing: Text(
+                          'Estoque: ${product['stock']}',
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
               ],
             ),
           );
         },
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        currentIndex: 3, // Relatórios
+        selectedItemColor: const Color(0xFF0D3F87),
+        unselectedItemColor: const Color(0xFF0D3F87),
+        showUnselectedLabels: true,
+
+        onTap: (index) {
+          switch (index) {
+            case 0:
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const HomePage()),
+              );
+              break;
+
+            case 1:
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ClientPage()),
+              );
+              break;
+
+            case 2:
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SalesPage()),
+              );
+              break;
+
+            case 3:
+              // Já está na tela de relatórios
+              break;
+          }
+        },
+
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined),
+            label: 'Início',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.people_outline),
+            label: 'Clientes',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.shopping_cart_outlined),
+            label: 'Venda',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.bar_chart_outlined),
+            label: 'Relatórios',
+          ),
+        ],
       ),
     );
   }

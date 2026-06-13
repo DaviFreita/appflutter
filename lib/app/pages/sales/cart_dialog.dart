@@ -328,13 +328,11 @@ class CartPage extends StatelessWidget {
                           try {
                             final pdfFile = await PdfService.generate(saleVm);
 
-                            await saleVm.finishSale();
-
                             await Share.shareXFiles([
                               XFile(pdfFile.path),
-                            ], text: 'Pedido ${saleVm.customer?.name}');
+                            ], text: 'Comprovante da venda');
 
-                            saleVm.cancelSale();
+                            await saleVm.finishSale();
 
                             await context
                                 .read<HomeSearchViewmodel>()
