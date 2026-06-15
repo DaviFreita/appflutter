@@ -1,8 +1,9 @@
+import 'package:DasCobras/app/service/validation_service/product_validation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
-
+import 'package:DasCobras/app/pages/widgets/shared/product_image.dart';
 import '../../model/product_search_model.dart';
 import '../../viewmodels/sale_viewmodel/sale_viewmodel.dart';
 
@@ -52,18 +53,10 @@ class _AddProductCartDialogState extends State<AddProductCartDialog> {
                     ),
                   ),
 
-                  Container(
+                  ProductImage(
+                    imageUrl: widget.product.imageurl,
                     width: 140,
                     height: 140,
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: const Color(0xFF0D3F87)),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Image.network(
-                      widget.product.imageurl,
-                      fit: BoxFit.contain,
-                    ),
                   ),
 
                   const SizedBox(height: 20),
@@ -151,6 +144,7 @@ class _AddProductCartDialogState extends State<AddProductCartDialog> {
                           controller: quantityController,
                           keyboardType: TextInputType.number,
                           textAlign: TextAlign.center,
+                          validator: (value) => ProductValidation.stock(value),
                           inputFormatters: [
                             FilteringTextInputFormatter.digitsOnly,
                           ],

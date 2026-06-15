@@ -1,20 +1,12 @@
 import 'package:flutter/material.dart';
-
-import 'package:DasCobras/app/model/product_search_model.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:DasCobras/app/pages/widgets/home/product_image.dart';
+import 'package:DasCobras/app/pages/widgets/shared/product_image.dart';
+import 'package:intl/intl.dart';
 
 class ProductCard extends StatelessWidget {
-  final ProductSearchModel product;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
+  final dynamic product;
+  final Widget actions;
 
-  const ProductCard({
-    super.key,
-    required this.product,
-    required this.onEdit,
-    required this.onDelete,
-  });
+  const ProductCard({super.key, required this.product, required this.actions});
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +21,7 @@ class ProductCard extends StatelessWidget {
         : product.stock <= 10
         ? 'Últimas ${product.stock} unidades'
         : '${product.stock} em estoque';
-
+    final currency = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
     return Container(
       margin: const EdgeInsets.only(bottom: 15, left: 5, right: 5),
       padding: const EdgeInsets.all(12),
@@ -68,7 +60,7 @@ class ProductCard extends StatelessWidget {
                 ),
 
                 Text(
-                  'R\$ ${product.price.toStringAsFixed(2)}',
+                  currency.format(product.price),
                   style: const TextStyle(
                     color: Color(0xFF28A745),
                     fontWeight: FontWeight.bold,
@@ -90,8 +82,10 @@ class ProductCard extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(
-                        Icons.inventory_2_outlined,
+                      Icon(
+                        stockColor == Colors.red || stockColor == Colors.orange
+                            ? Icons.warning_amber_rounded
+                            : Icons.inventory_2_outlined,
                         size: 14,
                         color: Colors.white,
                       ),
@@ -110,33 +104,7 @@ class ProductCard extends StatelessWidget {
             ),
           ),
 
-          Column(
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFF9800),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: IconButton(
-                  onPressed: onEdit,
-                  icon: const Icon(Icons.edit_outlined, color: Colors.white),
-                ),
-              ),
-
-              const SizedBox(height: 8),
-
-              Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF44336),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: IconButton(
-                  onPressed: onDelete,
-                  icon: const Icon(Icons.delete_outline, color: Colors.white),
-                ),
-              ),
-            ],
-          ),
+          actions,
         ],
       ),
     );

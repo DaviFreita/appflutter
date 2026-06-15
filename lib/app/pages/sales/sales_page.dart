@@ -12,15 +12,15 @@ import 'package:DasCobras/app/pages/client/client_page.dart';
 import 'package:DasCobras/app/pages/client/view_client_dialog.dart';
 import '../../viewmodels/sale_viewmodel/sale_viewmodel.dart';
 import 'cart_dialog.dart';
-import 'package:DasCobras/app/pages/sales/add_product_cart_dialog.dart';
 import 'package:DasCobras/app/pages/widgets/home/custom_bottom_nav.dart';
-import 'package:DasCobras/app/pages/widgets/sales/sales_floating_buttons.dart';
-import 'package:DasCobras/app/pages/widgets/sales/sales_product_card.dart';
 import 'package:DasCobras/app/pages/widgets/sales/selected_client_card.dart';
 import 'package:DasCobras/app/pages/widgets/shared/client_search_bar.dart';
 import 'package:DasCobras/app/pages/widgets/sales/customer_search_results.dart';
 import 'package:DasCobras/app/pages/widgets/shared/product_search_bar.dart';
 import 'package:DasCobras/app/pages/widgets/shared/category_filter.dart';
+import 'package:DasCobras/app/pages/widgets/shared/product_card.dart';
+import 'package:DasCobras/app/pages/widgets/sales/product_sale_actions.dart';
+import 'package:DasCobras/app//pages/widgets/sales/sales_floating_buttons.dart';
 
 class SalesPage extends StatefulWidget {
   const SalesPage({super.key});
@@ -35,6 +35,11 @@ class _SalesPageState extends State<SalesPage> {
   final TextEditingController clientSearchController = TextEditingController();
   String selectedCategory = 'Todos';
   String selectedOrder = 'Mais relevantes';
+
+  final ScrollController _scrollController = ScrollController();
+
+  bool showHeader = true;
+  double lastOffset = 0;
   @override
   void initState() {
     super.initState();
@@ -42,6 +47,24 @@ class _SalesPageState extends State<SalesPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<HomeSearchViewmodel>().loadProduct();
       context.read<ClientViewModel>().loadCustomers();
+    });
+
+    _scrollController.addListener(() {
+      final currentOffset = _scrollController.offset;
+
+      if (currentOffset > lastOffset + 8 && currentOffset > 80) {
+        if (showHeader) {
+          setState(() => showHeader = false);
+        }
+      }
+
+      if (currentOffset < lastOffset - 8) {
+        if (!showHeader) {
+          setState(() => showHeader = true);
+        }
+      }
+
+      lastOffset = currentOffset;
     });
   }
 
@@ -61,39 +84,66 @@ class _SalesPageState extends State<SalesPage> {
           children: [
             const SizedBox(height: 15),
 
-            const LogoHeader(),
-
-            const SizedBox(height: 15),
-
-            ClientSearchBar(
-              controller: clientSearchController,
-              onChanged: (value) {
-                context.read<ClientViewModel>().searchCustomer(value);
-                setState(() {});
-              },
-            ),
-
-            const SizedBox(height: 10),
-
-            if (selectedCustomer != null)
-              SelectedClientCard(
-                name: selectedCustomer!.name,
-                cpfOrCnpj: selectedCustomer!.cpforcnpj,
-                onDetails: () {
-                  showDialog(
-                    context: context,
-                    builder: (_) => ViewClientDialog(client: selectedCustomer!),
+            ClipRect(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 450),
+                switchInCurve: Curves.easeOutCubic,
+                switchOutCurve: Curves.easeInCubic,
+                transitionBuilder: (child, animation) {
+                  return SizeTransition(
+                    sizeFactor: animation,
+                    axisAlignment: -1,
+                    child: FadeTransition(opacity: animation, child: child),
                   );
                 },
-                onRemove: () {
-                  setState(() {
-                    selectedCustomer = null;
-                  });
+                child: showHeader
+                    ? Column(
+                        key: const ValueKey('header-visible'),
+                        children: [
+                          const LogoHeader(),
 
-                  context.read<SaleViewModel>().removeCustomer();
-                  context.read<ClientViewModel>().searchCustomer('');
-                },
+                          const SizedBox(height: 15),
+
+                          ClientSearchBar(
+                            controller: clientSearchController,
+                            onChanged: (value) {
+                              context.read<ClientViewModel>().searchCustomer(
+                                value,
+                              );
+                              setState(() {});
+                            },
+                          ),
+
+                          const SizedBox(height: 10),
+
+                          if (selectedCustomer != null)
+                            SelectedClientCard(
+                              name: selectedCustomer!.name,
+                              cpfOrCnpj: selectedCustomer!.cpforcnpj,
+                              onDetails: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (_) => ViewClientDialog(
+                                    client: selectedCustomer!,
+                                  ),
+                                );
+                              },
+                              onRemove: () {
+                                setState(() {
+                                  selectedCustomer = null;
+                                });
+
+                                context.read<SaleViewModel>().removeCustomer();
+                                context.read<ClientViewModel>().searchCustomer(
+                                  '',
+                                );
+                              },
+                            ),
+                        ],
+                      )
+                    : const SizedBox(key: ValueKey('header-hidden'), height: 0),
               ),
+            ),
 
             const SizedBox(height: 0),
 
@@ -164,20 +214,15 @@ class _SalesPageState extends State<SalesPage> {
                   }
 
                   return ListView.builder(
+                    controller: _scrollController,
                     padding: const EdgeInsets.fromLTRB(10, 0, 10, 100),
                     itemCount: service.filteredProducts.length,
                     itemBuilder: (context, index) {
                       final product = service.filteredProducts[index];
 
-                      return SalesProductCard(
+                      return ProductCard(
                         product: product,
-                        onAdd: () {
-                          showDialog(
-                            context: context,
-                            builder: (_) =>
-                                AddProductCartDialog(product: product),
-                          );
-                        },
+                        actions: ProductSaleActions(product: product),
                       );
                     },
                   );

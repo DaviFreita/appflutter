@@ -4,15 +4,15 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
 import 'package:DasCobras/app/viewmodels/home_viewmodel/home_search_viewmodel.dart';
-import 'package:DasCobras/app/pages/home/edit_product_dialog.dart';
 import 'package:DasCobras/app/pages/home/add_product_dialog.dart';
 import 'package:DasCobras/app/pages/client/client_page.dart';
 import 'package:DasCobras/app/pages/reports/reports_page.dart';
 import 'package:DasCobras/app/pages/widgets/home/custom_bottom_nav.dart';
-import 'package:DasCobras/app/pages/widgets/home/product_car_dialog.dart';
+import 'package:DasCobras/app/pages/widgets/shared/product_card.dart';
 import 'package:DasCobras/app/pages/widgets/shared/logo_header.dart';
 import 'package:DasCobras/app/pages/widgets/shared/product_search_bar.dart';
 import 'package:DasCobras/app/pages/widgets/shared/category_filter.dart';
+import 'package:DasCobras/app/pages/widgets/home/product_home_actions.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -111,70 +111,7 @@ class _HomePageState extends State<HomePage> {
 
                       return ProductCard(
                         product: product,
-                        onEdit: () {
-                          showDialog(
-                            context: context,
-                            builder: (context) =>
-                                EditProductDialog(product: product),
-                          );
-                        },
-                        onDelete: () async {
-                          final confirmar = await showDialog<bool>(
-                            context: context,
-                            builder: (context) {
-                              return AlertDialog(
-                                title: const Text("Excluir Produto"),
-                                content: Text(
-                                  "Este produto deixará de aparecer nas vendas e no estoque. Deseja continuar?\n\n${product.name}",
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.pop(context, false);
-                                    },
-                                    child: const Text("Não"),
-                                  ),
-                                  ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.red,
-                                    ),
-                                    onPressed: () {
-                                      Navigator.pop(context, true);
-                                    },
-                                    child: const Text(
-                                      "Sim",
-                                      style: TextStyle(color: Colors.white),
-                                    ),
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-
-                          if (confirmar == true) {
-                            try {
-                              await context
-                                  .read<HomeSearchViewmodel>()
-                                  .deleteProduct(product.id);
-
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      "Produto removido com sucesso!",
-                                    ),
-                                  ),
-                                );
-                              }
-                            } catch (e) {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text("Erro ao apagar: $e")),
-                                );
-                              }
-                            }
-                          }
-                        },
+                        actions: ProductHomeActions(product: product),
                       );
                     },
                   );

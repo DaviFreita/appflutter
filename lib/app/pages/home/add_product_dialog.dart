@@ -25,14 +25,16 @@ class _AddProductDialogState extends State<AddProductDialog> {
   final stockController = TextEditingController();
 
   final supabase = Supabase.instance.client;
+  final ProductImageService imageService = ProductImageService();
+
   String? imageError;
+  String? categoryError;
+
   int? selectedCategory;
   File? selectedImage;
   bool loading = false;
 
   List<Map<String, dynamic>> categories = [];
-
-  final ProductImageService imageService = ProductImageService();
 
   @override
   void initState() {
@@ -42,6 +44,8 @@ class _AddProductDialogState extends State<AddProductDialog> {
 
   Future<void> loadCategories() async {
     final response = await supabase.from('category').select('id, name');
+
+    if (!mounted) return;
 
     setState(() {
       categories = List<Map<String, dynamic>>.from(response);
@@ -75,6 +79,13 @@ class _AddProductDialogState extends State<AddProductDialog> {
 
   Future<void> saveProduct() async {
     if (!_formKey.currentState!.validate()) return;
+
+    if (selectedCategory == null) {
+      setState(() {
+        categoryError = 'Categoria obrigatória';
+      });
+      return;
+    }
 
     if (selectedImage == null) {
       setState(() {
@@ -163,29 +174,62 @@ class _AddProductDialogState extends State<AddProductDialog> {
                   validator: (value) => ProductValidation.name(value),
                   decoration: _inputDecoration(label: 'Nome:'),
                 ),
+
                 const SizedBox(height: 15),
 
-                DropdownButtonFormField<int>(
-                  value: selectedCategory,
-                  decoration: _inputDecoration(label: 'Categoria:'),
-                  items: categories.map((category) {
-                    return DropdownMenuItem<int>(
-                      value: category['id'],
-                      child: Text(category['name']),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    return DropdownMenu<int>(
+                      width: constraints.maxWidth,
+                      initialSelection: selectedCategory,
+                      label: const Text('Categoria:'),
+                      menuHeight: 230,
+                      menuStyle: MenuStyle(
+                        backgroundColor: const WidgetStatePropertyAll(
+                          Colors.white,
+                        ),
+                        surfaceTintColor: const WidgetStatePropertyAll(
+                          Colors.white,
+                        ),
+                        elevation: const WidgetStatePropertyAll(4),
+                        shape: WidgetStatePropertyAll(
+                          RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                      inputDecorationTheme: InputDecorationTheme(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      dropdownMenuEntries: categories.map((category) {
+                        return DropdownMenuEntry<int>(
+                          value: category['id'],
+                          label: category['name'],
+                        );
+                      }).toList(),
+                      onSelected: (value) {
+                        setState(() {
+                          selectedCategory = value;
+                          categoryError = null;
+                        });
+                      },
                     );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      selectedCategory = value;
-                    });
-                  },
-                  validator: (value) {
-                    if (value == null) {
-                      return 'Categoria obrigatória';
-                    }
-                    return null;
                   },
                 ),
+
+                if (categoryError != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 5),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        categoryError!,
+                        style: const TextStyle(color: Colors.red, fontSize: 12),
+                      ),
+                    ),
+                  ),
 
                 const SizedBox(height: 15),
 

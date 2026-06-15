@@ -18,7 +18,7 @@ class SalesFloatingButtons extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         FloatingActionButton(
-          heroTag: "history",
+          heroTag: 'history',
           backgroundColor: const Color(0xFF0D3F87),
           onPressed: onHistory,
           child: const Icon(Icons.history, color: Colors.white),
@@ -26,12 +26,12 @@ class SalesFloatingButtons extends StatelessWidget {
 
         const SizedBox(height: 10),
 
-        Badge(
-          label: Text("$cartCount"),
-          child: FloatingActionButton(
-            heroTag: "cart",
-            backgroundColor: const Color(0xFF0D3F87),
-            onPressed: onCart,
+        FloatingActionButton(
+          heroTag: 'cart',
+          backgroundColor: const Color(0xFF0D3F87),
+          onPressed: onCart,
+          child: Badge(
+            label: Text(cartCount.toString()),
             child: const Icon(
               Icons.shopping_cart_outlined,
               color: Colors.white,

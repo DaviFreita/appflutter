@@ -175,25 +175,44 @@ class _EditProductDialogState extends State<EditProductDialog> {
 
                 const SizedBox(height: 15),
 
-                DropdownButtonFormField<int>(
-                  value: selectedCategory,
-                  decoration: _inputDecoration(label: 'Categoria:'),
-                  items: categories.map((category) {
-                    return DropdownMenuItem<int>(
-                      value: category['id'],
-                      child: Text(category['name']),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    return DropdownMenu<int>(
+                      width: constraints.maxWidth,
+                      initialSelection: selectedCategory,
+                      label: const Text('Categoria:'),
+                      menuHeight: 230,
+                      menuStyle: MenuStyle(
+                        backgroundColor: const WidgetStatePropertyAll(
+                          Colors.white,
+                        ),
+                        surfaceTintColor: const WidgetStatePropertyAll(
+                          Colors.white,
+                        ),
+                        elevation: const WidgetStatePropertyAll(4),
+                        shape: WidgetStatePropertyAll(
+                          RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                      inputDecorationTheme: InputDecorationTheme(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      dropdownMenuEntries: categories.map((category) {
+                        return DropdownMenuEntry<int>(
+                          value: category['id'],
+                          label: category['name'],
+                        );
+                      }).toList(),
+                      onSelected: (value) {
+                        setState(() {
+                          selectedCategory = value;
+                        });
+                      },
                     );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      selectedCategory = value;
-                    });
-                  },
-                  validator: (value) {
-                    if (value == null) {
-                      return 'Categoria obrigatória';
-                    }
-                    return null;
                   },
                 ),
 
