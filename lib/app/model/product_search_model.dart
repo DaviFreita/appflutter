@@ -18,10 +18,6 @@ class ProductSearchModel {
   });
 
   factory ProductSearchModel.fromMap(Map<String, dynamic> map) {
-    print("----------------");
-    print(map);
-    print(map["category"]);
-
     return ProductSearchModel(
       id: map['id'] ?? 0,
       name: map['name'] ?? '',

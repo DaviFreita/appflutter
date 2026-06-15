@@ -23,10 +23,7 @@ class ClientViewModel extends ChangeNotifier {
       filteredCustomers = List.from(customers);
 
       notifyListeners();
-    } catch (e) {
-      print('ERRO AO CARREGAR CLIENTES');
-      print(e);
-    }
+    } catch (e) {}
   }
 
   void searchCustomer(String value) {
@@ -89,10 +86,7 @@ class ClientViewModel extends ChangeNotifier {
       await supabase.from('customer').update({'is_active': false}).eq('id', id);
 
       await loadCustomers();
-
-      print('CLIENTE DESATIVADO COM SUCESSO');
     } catch (e) {
-      print('ERRO AO DESATIVAR CLIENTE');
       print(e);
       rethrow;
     }

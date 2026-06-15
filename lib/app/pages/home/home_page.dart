@@ -10,6 +10,9 @@ import 'package:DasCobras/app/pages/client/client_page.dart';
 import 'package:DasCobras/app/pages/reports/reports_page.dart';
 import 'package:DasCobras/app/pages/widgets/home/custom_bottom_nav.dart';
 import 'package:DasCobras/app/pages/widgets/home/product_car_dialog.dart';
+import 'package:DasCobras/app/pages/widgets/shared/logo_header.dart';
+import 'package:DasCobras/app/pages/widgets/shared/product_search_bar.dart';
+import 'package:DasCobras/app/pages/widgets/shared/category_filter.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -20,6 +23,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   String selectedCategory = 'Todos';
+  String selectedOrder = 'Mais relevantes';
 
   @override
   void initState() {
@@ -32,40 +36,6 @@ class _HomePageState extends State<HomePage> {
 
   final currency = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
 
-  void openCategoryFilter() {
-    final vm = context.read<HomeSearchViewmodel>();
-
-    showModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return SafeArea(
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: vm.categories.length,
-            itemBuilder: (context, index) {
-              final category = vm.categories[index];
-
-              return ListTile(
-                title: Text(category),
-                trailing: selectedCategory == category
-                    ? const Icon(Icons.check, color: Color(0xFF0D3F87))
-                    : null,
-                onTap: () {
-                  setState(() {
-                    selectedCategory = category;
-                  });
-
-                  vm.filterByCategory(category);
-                  Navigator.pop(context);
-                },
-              );
-            },
-          ),
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -74,86 +44,36 @@ class _HomePageState extends State<HomePage> {
       body: SafeArea(
         child: Column(
           children: [
-            const SizedBox(height: 15),
+            const SizedBox(height: 10),
 
-            Center(
-              child: Image.asset(
-                'lib/app/assets/img/LogoLonga.png',
-                width: 180,
-              ),
-            ),
+            const LogoHeader(),
 
             const SizedBox(height: 15),
 
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: SearchBar(
-                hintText: 'Buscar produto...',
-                elevation: const WidgetStatePropertyAll(0),
-                backgroundColor: const WidgetStatePropertyAll(Colors.white),
-                trailing: const [Icon(Icons.search, color: Color(0xFF0D3F87))],
-                shape: WidgetStatePropertyAll(
-                  RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    side: BorderSide(color: Color(0xFF0D3F87)),
-                  ),
-                ),
-                onChanged: (value) {
-                  context.read<HomeSearchViewmodel>().searchProduct(
-                    value: value,
-                  );
-                },
-              ),
+            ProductSearchBar(
+              onSearch: (value) {
+                context.read<HomeSearchViewmodel>().searchProduct(value: value);
+              },
             ),
 
             const SizedBox(height: 10),
 
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                children: [
-                  Container(
-                    height: 42,
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0D3F87),
-                      borderRadius: BorderRadius.circular(7),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      selectedCategory,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(width: 8),
-
-                  GestureDetector(
-                    onTap: openCategoryFilter,
-                    child: Container(
-                      width: 42,
-                      height: 42,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(
-                          color: const Color(0xFF0D3F87),
-                          width: 1,
-                        ),
-                        borderRadius: BorderRadius.circular(7),
-                      ),
-                      child: const Icon(
-                        Icons.filter_alt_outlined,
-                        color: Color(0xFF0D3F87),
-                        size: 22,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            Consumer<HomeSearchViewmodel>(
+              builder: (context, vm, _) {
+                return CategoryFilter(
+                  categories: vm.categories,
+                  selectedCategory: selectedCategory,
+                  selectedOrder: selectedOrder,
+                  onCategorySelected: (category) {
+                    setState(() => selectedCategory = category);
+                    vm.filterByCategory(category);
+                  },
+                  onOrderSelected: (order) {
+                    setState(() => selectedOrder = order);
+                    vm.orderProducts(order);
+                  },
+                );
+              },
             ),
 
             const SizedBox(height: 10),

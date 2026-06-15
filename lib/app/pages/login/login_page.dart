@@ -1,5 +1,5 @@
 import 'package:DasCobras/app/pages/home/home_page.dart';
-import 'package:DasCobras/app/service/auth_service/auth_session_service.dart';
+import 'package:DasCobras/app/service/auth_session_service.dart';
 import 'package:DasCobras/app/service/validation_service/personal_validation.dart';
 import 'package:DasCobras/app/service/validation_service/personal%20_data_validation.dart';
 import 'package:DasCobras/app/viewmodels/login_viewmodel/login_viewmodel.dart';

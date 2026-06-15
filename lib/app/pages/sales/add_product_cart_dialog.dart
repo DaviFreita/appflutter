@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 
 import '../../model/product_search_model.dart';
 import '../../viewmodels/sale_viewmodel/sale_viewmodel.dart';
@@ -17,6 +19,8 @@ class _AddProductCartDialogState extends State<AddProductCartDialog> {
   final TextEditingController quantityController = TextEditingController(
     text: "1",
   );
+
+  final currency = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
 
   int quantity = 1;
   @override
@@ -76,7 +80,7 @@ class _AddProductCartDialogState extends State<AddProductCartDialog> {
                   const SizedBox(height: 15),
 
                   Text(
-                    "R\$ ${widget.product.price.toStringAsFixed(2)}",
+                    currency.format(widget.product.price),
                     style: const TextStyle(
                       fontSize: 28,
                       color: Colors.green,
@@ -143,10 +147,13 @@ class _AddProductCartDialogState extends State<AddProductCartDialog> {
 
                       SizedBox(
                         width: 70,
-                        child: TextField(
+                        child: TextFormField(
                           controller: quantityController,
                           keyboardType: TextInputType.number,
                           textAlign: TextAlign.center,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
                           decoration: InputDecoration(
                             contentPadding: const EdgeInsets.symmetric(
                               vertical: 10,
@@ -173,27 +180,30 @@ class _AddProductCartDialogState extends State<AddProductCartDialog> {
 
                             if (qtd == null) return;
 
-                            if (qtd > widget.product.stock) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text("Estoque insuficiente!"),
-                                  backgroundColor: Colors.red,
-                                ),
-                              );
-
-                              quantity = widget.product.stock;
-                              quantityController.text = widget.product.stock
-                                  .toString();
-                              return;
-                            }
-
-                            if (qtd < 1) {
-                              quantity = 1;
-                              quantityController.text = "1";
-                              return;
-                            }
-
-                            quantity = qtd;
+                            setState(() {
+                              if (qtd > widget.product.stock) {
+                                quantity = widget.product.stock;
+                                quantityController.text = widget.product.stock
+                                    .toString();
+                                quantityController.selection =
+                                    TextSelection.fromPosition(
+                                      TextPosition(
+                                        offset: quantityController.text.length,
+                                      ),
+                                    );
+                              } else if (qtd < 1) {
+                                quantity = 1;
+                                quantityController.text = '1';
+                                quantityController.selection =
+                                    TextSelection.fromPosition(
+                                      TextPosition(
+                                        offset: quantityController.text.length,
+                                      ),
+                                    );
+                              } else {
+                                quantity = qtd;
+                              }
+                            });
                           },
                         ),
                       ),
@@ -234,9 +244,16 @@ class _AddProductCartDialogState extends State<AddProductCartDialog> {
                       onPressed: widget.product.stock == 0
                           ? null
                           : () {
+                              final qtd =
+                                  int.tryParse(quantityController.text) ?? 0;
+
+                              if (qtd < 1) return;
+
+                              if (qtd > widget.product.stock) return;
+
                               context.read<SaleViewModel>().addProduct(
                                 widget.product,
-                                quantity,
+                                qtd,
                               );
 
                               Navigator.pop(context);

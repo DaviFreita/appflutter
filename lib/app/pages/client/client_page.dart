@@ -1,4 +1,5 @@
 import 'package:DasCobras/app/pages/sales/sales_page.dart';
+import 'package:DasCobras/app/pages/widgets/shared/logo_header.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -8,6 +9,8 @@ import 'package:DasCobras/app/pages/client/create_client_dialog.dart';
 import 'package:DasCobras/app/pages/client/edit_client_dialog.dart';
 import 'view_client_dialog.dart';
 import 'package:DasCobras/app/pages/widgets/home/custom_bottom_nav.dart';
+import 'package:DasCobras/app/pages/widgets/shared/client_search_bar.dart';
+import 'package:DasCobras/app/pages/widgets/client/client_card.dart';
 
 import '../../viewmodels/client_viewmodel/client_viewmodel.dart';
 
@@ -19,6 +22,8 @@ class ClientPage extends StatefulWidget {
 }
 
 class _ClientPageState extends State<ClientPage> {
+  final TextEditingController clientSearchController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -32,41 +37,19 @@ class _ClientPageState extends State<ClientPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFFFFFF),
-
       body: SafeArea(
         child: Column(
           children: [
             const SizedBox(height: 15),
-
-            Center(
-              child: Image.asset(
-                'lib/app/assets/img/LogoLonga.png',
-                width: 180,
-              ),
-            ),
-
+            const LogoHeader(),
             const SizedBox(height: 15),
 
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: SearchBar(
-                hintText: 'Buscar cliente...',
-                hintStyle: const WidgetStatePropertyAll(
-                  TextStyle(color: Color(0xFF0D3F87)),
-                ),
-                elevation: const WidgetStatePropertyAll(0),
-                backgroundColor: const WidgetStatePropertyAll(Colors.white),
-                trailing: const [Icon(Icons.search, color: Color(0xFF0D3F87))],
-                shape: WidgetStatePropertyAll(
-                  RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    side: BorderSide(color: Color(0xFF0D3F87)),
-                  ),
-                ),
-                onChanged: (value) {
-                  context.read<ClientViewModel>().searchCustomer(value);
-                },
-              ),
+            ClientSearchBar(
+              controller: clientSearchController,
+              onChanged: (value) {
+                context.read<ClientViewModel>().searchCustomer(value);
+                setState(() {});
+              },
             ),
 
             const SizedBox(height: 15),
@@ -89,215 +72,79 @@ class _ClientPageState extends State<ClientPage> {
                     itemBuilder: (context, index) {
                       final client = service.filteredCustomers[index];
 
-                      return Container(
-                        margin: const EdgeInsets.only(
-                          bottom: 15,
-                          left: 5,
-                          right: 5,
-                        ),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          border: Border.all(color: const Color(0xFF0D3F87)),
-                          borderRadius: BorderRadius.circular(3),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Colors.black26,
-                              blurRadius: 4,
-                              offset: Offset(1, 2),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 70,
-                              height: 70,
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                  color: const Color(0xFF0D3F87),
+                      return ClientCard(
+                        client: client,
+                        onView: () {
+                          showDialog(
+                            context: context,
+                            builder: (_) => ViewClientDialog(client: client),
+                          );
+                        },
+                        onEdit: () {
+                          showDialog(
+                            context: context,
+                            builder: (_) => EditClientDialog(client: client),
+                          );
+                        },
+                        onDelete: () async {
+                          final confirmar = await showDialog<bool>(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                title: const Text("Excluir Cliente"),
+                                content: Text(
+                                  "Deseja realmente apagar o cliente?\n\n${client.name}",
                                 ),
-                              ),
-                              child: const Icon(
-                                Icons.person_outline,
-                                size: 50,
-                                color: Color(0xFF0D3F87),
-                              ),
-                            ),
-
-                            const SizedBox(width: 10),
-
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    client.name,
-                                    style: const TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black,
-                                    ),
-                                  ),
-
-                                  const SizedBox(height: 4),
-
-                                  const Text(
-                                    "CPF/CNPJ",
-                                    style: TextStyle(
-                                      color: Color(0xFF0D3F87),
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-
-                                  Text(
-                                    client.cpforcnpj,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-
-                                  const SizedBox(height: 8),
-
-                                  GestureDetector(
-                                    onTap: () {
-                                      showDialog(
-                                        context: context,
-                                        builder: (_) =>
-                                            ViewClientDialog(client: client),
-                                      );
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.pop(context, false);
                                     },
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFF0D3F87),
-                                        borderRadius: BorderRadius.circular(5),
-                                      ),
-                                      child: const Text(
-                                        'Ver Detalhes',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
+                                    child: const Text("Não"),
+                                  ),
+                                  ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.red,
+                                    ),
+                                    onPressed: () {
+                                      Navigator.pop(context, true);
+                                    },
+                                    child: const Text(
+                                      "Sim",
+                                      style: TextStyle(color: Colors.white),
                                     ),
                                   ),
                                 ],
-                              ),
-                            ),
+                              );
+                            },
+                          );
 
-                            Column(
-                              children: [
-                                Container(
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFFF9800),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: IconButton(
-                                    onPressed: () {
-                                      showDialog(
-                                        context: context,
-                                        builder: (_) =>
-                                            EditClientDialog(client: client),
-                                      );
-                                    },
-                                    icon: const Icon(
-                                      Icons.edit_outlined,
-                                      color: Colors.white,
+                          if (confirmar == true) {
+                            try {
+                              await context
+                                  .read<ClientViewModel>()
+                                  .deleteCustomer(client.id);
+
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      "Cliente removido com sucesso!",
                                     ),
                                   ),
-                                ),
-
-                                const SizedBox(height: 8),
-
-                                Container(
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFF44336),
-                                    borderRadius: BorderRadius.circular(6),
+                                );
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text("Erro ao apagar cliente: $e"),
                                   ),
-                                  child: IconButton(
-                                    onPressed: () async {
-                                      final confirmar = await showDialog<bool>(
-                                        context: context,
-                                        builder: (context) {
-                                          return AlertDialog(
-                                            title: const Text(
-                                              "Excluir Cliente",
-                                            ),
-                                            content: Text(
-                                              "Deseja realmente apagar o cliente?\n\n${client.name}",
-                                            ),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () {
-                                                  Navigator.pop(context, false);
-                                                },
-                                                child: const Text("Não"),
-                                              ),
-                                              ElevatedButton(
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor: Colors.red,
-                                                ),
-                                                onPressed: () {
-                                                  Navigator.pop(context, true);
-                                                },
-                                                child: const Text(
-                                                  "Sim",
-                                                  style: TextStyle(
-                                                    color: Colors.white,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          );
-                                        },
-                                      );
-
-                                      if (confirmar == true) {
-                                        try {
-                                          await context
-                                              .read<ClientViewModel>()
-                                              .deleteCustomer(client.id);
-
-                                          if (mounted) {
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              const SnackBar(
-                                                content: Text(
-                                                  "Cliente removido com sucesso!",
-                                                ),
-                                              ),
-                                            );
-                                          }
-                                        } catch (e) {
-                                          if (mounted) {
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              SnackBar(
-                                                content: Text(
-                                                  "Erro ao apagar cliente: $e",
-                                                ),
-                                              ),
-                                            );
-                                          }
-                                        }
-                                      }
-                                    },
-                                    icon: const Icon(
-                                      Icons.delete_outline,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                                );
+                              }
+                            }
+                          }
+                        },
                       );
                     },
                   );
@@ -320,7 +167,7 @@ class _ClientPageState extends State<ClientPage> {
       ),
 
       bottomNavigationBar: CustomBottomNav(
-        currentIndex: 1, // Clientes
+        currentIndex: 1,
         onTap: (index) {
           switch (index) {
             case 0:
@@ -329,17 +176,14 @@ class _ClientPageState extends State<ClientPage> {
                 MaterialPageRoute(builder: (_) => const HomePage()),
               );
               break;
-
             case 1:
-              break; // Já está em Clientes
-
+              break;
             case 2:
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (_) => const SalesPage()),
               );
               break;
-
             case 3:
               Navigator.pushReplacement(
                 context,
@@ -350,5 +194,11 @@ class _ClientPageState extends State<ClientPage> {
         },
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    clientSearchController.dispose();
+    super.dispose();
   }
 }

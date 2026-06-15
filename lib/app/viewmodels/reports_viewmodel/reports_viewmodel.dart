@@ -56,7 +56,7 @@ class ReportsViewModel extends ChangeNotifier {
       await _loadSales(start, end);
       await _loadTopProducts(start, end);
     } catch (e) {
-      print('Erro ao carregar relatórios: $e');
+      print(e);
     }
 
     loading = false;
@@ -135,5 +135,4 @@ class ReportsViewModel extends ChangeNotifier {
 
     notifyListeners();
   }
-  
 }

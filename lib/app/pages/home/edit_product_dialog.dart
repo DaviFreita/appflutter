@@ -1,10 +1,14 @@
 import 'dart:io';
 
-import 'package:image_picker/image_picker.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:DasCobras/app/pages/widgets/home/product_image_picker.dart';
+import 'package:DasCobras/app/service/product_image_service.dart';
+import 'package:DasCobras/app/service/validation_service/mask.dart';
+import 'package:DasCobras/app/service/validation_service/product_validation.dart';
 import 'package:DasCobras/app/viewmodels/home_viewmodel/home_search_viewmodel.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class EditProductDialog extends StatefulWidget {
   final dynamic product;
@@ -16,12 +20,21 @@ class EditProductDialog extends StatefulWidget {
 }
 
 class _EditProductDialogState extends State<EditProductDialog> {
+  final _formKey = GlobalKey<FormState>();
+
   late TextEditingController nameController;
   late TextEditingController priceController;
   late TextEditingController stockController;
 
-  int selectedCategory = 1;
+  final supabase = Supabase.instance.client;
+  final ProductImageService imageService = ProductImageService();
+
+  List<Map<String, dynamic>> categories = [];
+
+  int? selectedCategory;
   File? selectedImage;
+  String? imageError;
+  bool loading = false;
 
   @override
   void initState() {
@@ -30,7 +43,7 @@ class _EditProductDialogState extends State<EditProductDialog> {
     nameController = TextEditingController(text: widget.product.name);
 
     priceController = TextEditingController(
-      text: widget.product.price.toString(),
+      text: widget.product.price.toStringAsFixed(2).replaceAll('.', ','),
     );
 
     stockController = TextEditingController(
@@ -38,61 +51,80 @@ class _EditProductDialogState extends State<EditProductDialog> {
     );
 
     selectedCategory = widget.product.categoryId;
+
+    loadCategories();
+  }
+
+  Future<void> loadCategories() async {
+    final response = await supabase.from('category').select('id, name');
+
+    if (!mounted) return;
+
+    setState(() {
+      categories = List<Map<String, dynamic>>.from(response);
+    });
   }
 
   Future<void> pickImage() async {
-    final picker = ImagePicker();
+    try {
+      final file = await imageService.pickImage();
 
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+      if (file == null) return;
 
-    if (image != null) {
       setState(() {
-        selectedImage = File(image.path);
+        selectedImage = file;
+        imageError = null;
+      });
+    } catch (e) {
+      setState(() {
+        imageError = e.toString().replaceFirst('Exception: ', '');
       });
     }
   }
 
-  Future<String> uploadImage() async {
-    if (selectedImage == null) {
-      return widget.product.imageurl;
-    }
-
-    final supabase = Supabase.instance.client;
-
-    final fileName = "${DateTime.now().millisecondsSinceEpoch}.jpg";
-
-    await supabase.storage
-        .from('imageProducts')
-        .upload(fileName, selectedImage!);
-
-    return supabase.storage.from('imageProducts').getPublicUrl(fileName);
-  }
-
   Future<void> saveProduct() async {
+    if (!_formKey.currentState!.validate()) return;
+
     try {
-      String imageUrl = await uploadImage();
+      setState(() => loading = true);
+
+      String imageUrl = widget.product.imageurl;
+
+      if (selectedImage != null) {
+        await imageService.deleteImageByUrl(widget.product.imageurl);
+        imageUrl = await imageService.uploadImage(selectedImage!);
+      }
 
       await context.read<HomeSearchViewmodel>().updateProduct(
         id: widget.product.id,
         name: nameController.text.trim(),
         imageurl: imageUrl,
-        price: double.parse(priceController.text.replaceAll(',', '.')),
+        price: double.parse(
+          priceController.text.replaceAll('.', '').replaceAll(',', '.'),
+        ),
         stock: int.parse(stockController.text),
-        categoryId: selectedCategory,
+        categoryId: selectedCategory!,
       );
 
-      if (mounted) {
-        Navigator.pop(context);
+      if (!mounted) return;
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Produto atualizado com sucesso!")),
-        );
-      }
-    } catch (e, s) {
+      Navigator.pop(context);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Produto atualizado com sucesso!")),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Erro ao salvar: $e")));
+        setState(() => loading = false);
       }
     }
   }
@@ -110,140 +142,127 @@ class _EditProductDialogState extends State<EditProductDialog> {
           border: Border.all(color: const Color(0xFF0D3F87), width: 2),
         ),
         child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Editar Produto',
-                style: TextStyle(
-                  fontSize: 28,
-                  color: Color(0xFF0D3F87),
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              Row(
-                children: [
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: const Color(0xFF0D3F87)),
-                    ),
-                    child: selectedImage != null
-                        ? Image.file(selectedImage!, fit: BoxFit.contain)
-                        : Image.network(
-                            widget.product.imageurl,
-                            fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) {
-                              return const Icon(
-                                Icons.image_not_supported,
-                                size: 40,
-                              );
-                            },
-                          ),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Editar Produto',
+                  style: TextStyle(
+                    fontSize: 28,
+                    color: Color(0xFF0D3F87),
+                    fontWeight: FontWeight.w600,
                   ),
-
-                  const SizedBox(width: 12),
-
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: pickImage,
-                      icon: const Icon(Icons.camera_alt_outlined),
-                      label: const Text('Alterar Foto'),
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 20),
-
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Nome do Produto',
-                  border: OutlineInputBorder(),
                 ),
-              ),
 
-              const SizedBox(height: 15),
+                const SizedBox(height: 20),
 
-              DropdownButtonFormField<int>(
-                value: selectedCategory,
-                decoration: const InputDecoration(
-                  labelText: 'Categoria',
-                  border: OutlineInputBorder(),
+                ProductImagePicker(
+                  selectedImage: selectedImage,
+                  imageUrl: widget.product.imageurl,
+                  errorMessage: imageError,
+                  onTap: pickImage,
                 ),
-                items: const [
-                  DropdownMenuItem(value: 1, child: Text('Bebida')),
-                  DropdownMenuItem(value: 2, child: Text('Massas')),
-                  DropdownMenuItem(value: 3, child: Text('Ração')),
-                  DropdownMenuItem(value: 4, child: Text('Refrigerante')),
-                  DropdownMenuItem(value: 5, child: Text('Grãos')),
-                ],
-                onChanged: (value) {
-                  if (value != null) {
+
+                const SizedBox(height: 20),
+
+                TextFormField(
+                  controller: nameController,
+                  validator: (value) => ProductValidation.name(value),
+                  decoration: _inputDecoration(label: 'Nome:'),
+                ),
+
+                const SizedBox(height: 15),
+
+                DropdownButtonFormField<int>(
+                  value: selectedCategory,
+                  decoration: _inputDecoration(label: 'Categoria:'),
+                  items: categories.map((category) {
+                    return DropdownMenuItem<int>(
+                      value: category['id'],
+                      child: Text(category['name']),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
                     setState(() {
                       selectedCategory = value;
                     });
-                  }
-                },
-              ),
+                  },
+                  validator: (value) {
+                    if (value == null) {
+                      return 'Categoria obrigatória';
+                    }
+                    return null;
+                  },
+                ),
 
-              const SizedBox(height: 15),
+                const SizedBox(height: 15),
 
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: priceController,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      decoration: const InputDecoration(
-                        labelText: 'Preço',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(width: 10),
-
-                  Expanded(
-                    child: TextField(
-                      controller: stockController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Estoque',
-                        border: OutlineInputBorder(),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: priceController,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [Mask.currencyFormatter],
+                        decoration: InputDecoration(
+                          labelText: 'Preço',
+                          prefixText: 'R\$ ',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        validator: (value) => ProductValidation.price(value),
                       ),
                     ),
-                  ),
-                ],
-              ),
 
-              const SizedBox(height: 25),
+                    const SizedBox(width: 10),
 
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0D3F87),
-                  ),
-                  onPressed: saveProduct,
-                  child: const Text(
-                    'Salvar Produto',
-                    style: TextStyle(color: Colors.white, fontSize: 16),
+                    Expanded(
+                      child: TextFormField(
+                        controller: stockController,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                        decoration: _inputDecoration(label: 'Estoque'),
+                        validator: (value) => ProductValidation.stock(value),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 25),
+
+                SizedBox(
+                  width: double.infinity,
+                  height: 55,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0D3F87),
+                    ),
+                    onPressed: loading ? null : saveProduct,
+                    child: loading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text(
+                            'Salvar Produto',
+                            style: TextStyle(color: Colors.white, fontSize: 18),
+                          ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
+    );
+  }
+
+  InputDecoration _inputDecoration({String? label}) {
+    return InputDecoration(
+      labelText: label,
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
     );
   }
 

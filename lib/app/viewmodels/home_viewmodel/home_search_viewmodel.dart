@@ -11,20 +11,62 @@ class HomeSearchViewmodel extends ChangeNotifier {
 
   bool loading = false;
 
+  String selectedCategory = 'Todos';
+  String selectedOrder = '';
+
+  void applyFilters() {
+    var result = List<ProductSearchModel>.from(products);
+
+    if (selectedCategory != 'Todos') {
+      result = result.where((product) {
+        return product.category.toLowerCase() == selectedCategory.toLowerCase();
+      }).toList();
+    }
+
+    if (selectedOrder == 'A-Z') {
+      result.sort((a, b) => a.name.compareTo(b.name));
+    } else if (selectedOrder == 'Z-A') {
+      result.sort((a, b) => b.name.compareTo(a.name));
+    } else if (selectedOrder == 'Maior preço') {
+      result.sort((a, b) => b.price.compareTo(a.price));
+    } else if (selectedOrder == 'Menor preço') {
+      result.sort((a, b) => a.price.compareTo(b.price));
+    } else if (selectedOrder == 'Mais relevantes') {
+      result.sort((a, b) {
+        if (a.stock == 0 && b.stock > 0) return 1;
+        if (a.stock > 0 && b.stock == 0) return -1;
+        return a.name.compareTo(b.name);
+      });
+    }
+
+    filteredProducts = result;
+    notifyListeners();
+  }
+
+  void filterByCategory(String category) {
+    selectedCategory = category;
+    applyFilters();
+  }
+
+  void orderProducts(String order) {
+    selectedOrder = order;
+    applyFilters();
+  }
+
   Future<void> loadProduct({bool force = false}) async {
     if (products.isNotEmpty && !force) return;
 
     try {
       final response = await supabase
-    .from('product')
-    .select('''
+          .from('product')
+          .select('''
       *,
       category:category_id (
         id,
         name
       )
     ''')
-    .eq('is_active', true);
+          .eq('is_active', true);
 
       print(response);
 
@@ -60,21 +102,8 @@ class HomeSearchViewmodel extends ChangeNotifier {
 
       notifyListeners();
     } catch (e) {
-      print("ERRO NA BUSCA");
       print(e);
     }
-  }
-
-  Future<void> filterByCategory(String category) async {
-    if (category == 'Todos') {
-      filteredProducts = List.from(products);
-    } else {
-      filteredProducts = products.where((product) {
-        return product.category == category;
-      }).toList();
-    }
-
-    notifyListeners();
   }
 
   Future<void> updateProduct({
@@ -86,8 +115,6 @@ class HomeSearchViewmodel extends ChangeNotifier {
     required int categoryId,
   }) async {
     try {
-      print("========== UPDATE ==========");
-
       await supabase
           .from('product')
           .update({
@@ -101,7 +128,6 @@ class HomeSearchViewmodel extends ChangeNotifier {
 
       await loadProduct();
     } catch (e) {
-      print("ERRO AO ATUALIZAR");
       print(e);
       rethrow;
     }

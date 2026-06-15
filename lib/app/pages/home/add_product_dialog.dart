@@ -1,14 +1,14 @@
 import 'dart:io';
-
-import 'package:DasCobras/app/service/validation_service/product_validation.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:DasCobras/app/service/validation_service/mask.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
+import 'package:DasCobras/app/service/validation_service/product_validation.dart';
+import 'package:DasCobras/app/service/validation_service/mask.dart';
+import 'package:DasCobras/app/pages/widgets/home/product_image_picker.dart';
 import 'package:DasCobras/app/viewmodels/home_viewmodel/home_search_viewmodel.dart';
+import 'package:DasCobras/app/service/product_image_service.dart';
 
 class AddProductDialog extends StatefulWidget {
   const AddProductDialog({super.key});
@@ -25,15 +25,14 @@ class _AddProductDialogState extends State<AddProductDialog> {
   final stockController = TextEditingController();
 
   final supabase = Supabase.instance.client;
-
+  String? imageError;
   int? selectedCategory;
   File? selectedImage;
-
   bool loading = false;
 
-  String? imageError;
-
   List<Map<String, dynamic>> categories = [];
+
+  final ProductImageService imageService = ProductImageService();
 
   @override
   void initState() {
@@ -49,47 +48,21 @@ class _AddProductDialogState extends State<AddProductDialog> {
     });
   }
 
-  bool isValidImage(String path) {
-    final extension = path.split('.').last.toLowerCase();
-
-    return ['png', 'jpg', 'jpeg', 'webp', 'heic', 'heif'].contains(extension);
-  }
-
   Future<void> pickImage() async {
-    final picker = ImagePicker();
+    try {
+      final file = await imageService.pickImage();
 
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+      if (file == null) return;
 
-    if (image == null) return;
-
-    if (!isValidImage(image.path)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Formato inválido. Use PNG, JPG, JPEG, WebP, HEIC ou HEIF.',
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
+      setState(() {
+        selectedImage = file;
+        imageError = null;
+      });
+    } catch (e) {
+      setState(() {
+        imageError = e.toString().replaceFirst('Exception: ', '');
+      });
     }
-
-    final file = File(image.path);
-    final sizeInMB = await file.length() / (1024 * 1024);
-
-    if (sizeInMB > 5) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Imagem muito grande. Máximo permitido: 5MB.'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    setState(() {
-      selectedImage = file;
-    });
   }
 
   Future<String> uploadImage() async {
@@ -97,14 +70,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
       throw Exception('Imagem obrigatória.');
     }
 
-    final extension = selectedImage!.path.split('.').last.toLowerCase();
-    final fileName = "${DateTime.now().millisecondsSinceEpoch}.$extension";
-
-    await supabase.storage
-        .from('imageProducts')
-        .upload(fileName, selectedImage!);
-
-    return supabase.storage.from('imageProducts').getPublicUrl(fileName);
+    return imageService.uploadImage(selectedImage!);
   }
 
   Future<void> saveProduct() async {
@@ -184,57 +150,11 @@ class _AddProductDialogState extends State<AddProductDialog> {
 
                 const SizedBox(height: 25),
 
-                InkWell(
+                ProductImagePicker(
+                  selectedImage: selectedImage,
+                  errorMessage: imageError,
                   onTap: pickImage,
-                  child: Container(
-                    height: 120,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: const Color(0xFF0D3F87)),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: selectedImage == null
-                        ? const Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.camera_alt_outlined,
-                                size: 35,
-                                color: Color(0xFF0D3F87),
-                              ),
-                              SizedBox(height: 10),
-                              Text(
-                                'Adicionar foto',
-                                style: TextStyle(
-                                  color: Color(0xFF0D3F87),
-                                  fontSize: 22,
-                                ),
-                              ),
-                            ],
-                          )
-                        : ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: Image.file(
-                              selectedImage!,
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                              height: 120,
-                            ),
-                          ),
-                  ),
                 ),
-
-                if (imageError != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Text(
-                      imageError!,
-                      style: const TextStyle(
-                        color: Colors.red,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
 
                 const SizedBox(height: 20),
 
@@ -325,16 +245,6 @@ class _AddProductDialogState extends State<AddProductDialog> {
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget label(String text) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Text(
-        text,
-        style: const TextStyle(color: Color(0xFF0D3F87), fontSize: 16),
       ),
     );
   }

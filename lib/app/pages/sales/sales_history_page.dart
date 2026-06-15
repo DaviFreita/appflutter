@@ -1,4 +1,4 @@
-import 'package:DasCobras/app/service/sale_service.dart/pdf_service.dart';
+import 'package:DasCobras/app/service/pdf_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 

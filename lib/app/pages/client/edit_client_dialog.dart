@@ -44,9 +44,6 @@ class _EditClientDialogState extends State<EditClientDialog> {
 
     customerType = type == 'PJ' ? 'PJ' : 'PF';
 
-    print('TIPO SALVO: ${widget.client.customerType}');
-    print('TIPO USADO: $customerType');
-
     nameController = TextEditingController(text: widget.client.name);
     cpfController = TextEditingController(text: widget.client.cpforcnpj);
     birthDateController = TextEditingController(text: widget.client.birthDate);
