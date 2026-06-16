@@ -1,5 +1,5 @@
 import 'dart:io';
-
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:pdf/pdf.dart';
@@ -188,7 +188,6 @@ class PdfService {
             ),
 
             pw.Divider(),
-
             //-----------------------------------
             // TOTAL
             //-----------------------------------
@@ -376,7 +375,6 @@ class PdfService {
             ),
 
             pw.Divider(),
-
             ...items.map(
               (item) => pw.Container(
                 margin: const pw.EdgeInsets.only(bottom: 8),
@@ -384,7 +382,7 @@ class PdfService {
                   children: [
                     pw.Expanded(
                       flex: 4,
-                      child: pw.Text(item['product']?['name'] ?? 'Produto'),
+                      child: pw.Text(item['product_name'] ?? 'Produto'),
                     ),
 
                     pw.Expanded(

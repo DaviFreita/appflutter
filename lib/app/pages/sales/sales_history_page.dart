@@ -292,7 +292,6 @@ class _SalesHistoryPageState extends State<SalesHistoryPage> {
                           onPressed: () async {
                             try {
                               final items = await vm.getSaleItems(sale['id']);
-
                               final pdfFile =
                                   await PdfService.generateHistoryPdf(
                                     sale: sale,
