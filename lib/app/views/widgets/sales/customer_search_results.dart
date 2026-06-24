@@ -32,11 +32,15 @@ class CustomerSearchResults extends StatelessWidget {
         itemBuilder: (context, index) {
           final client = customers[index];
 
-          return ListTile(
-            leading: const Icon(Icons.person_outline, color: Color(0xFF0D3F87)),
-            title: Text(client.name),
-            subtitle: Text(client.cpforcnpj),
-            onTap: () => onSelect(client),
+          // 👈 Envolvemos o ListTile com Material transparente para corrigir o erro de renderização no Chrome
+          return Material(
+            color: Colors.transparent,
+            child: ListTile(
+              leading: const Icon(Icons.person_outline, color: Color(0xFF0D3F87)),
+              title: Text(client.name),
+              subtitle: Text(client.cpforcnpj),
+              onTap: () => onSelect(client),
+            ),
           );
         },
       ),
